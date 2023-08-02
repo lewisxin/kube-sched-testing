@@ -2,7 +2,7 @@
 mkdir ./jobs
 filename="${1:-countdown-tmpl.yaml}"
 flag=0
-for i in {10..40}
+for i in {01..30}
 do
   if [ $flag -eq 1 ]; then
       prio="high-priority"
@@ -12,5 +12,6 @@ do
       flag=1
   fi
   ddl=$(((i % 3 + 1) * 10))
-  cat $filename | sed "s/\$ID/$i/" | sed "s/\$DDL/$ddl/" | sed "s/\$PRIO/$prio/" > ./jobs/job-$i.yaml
+  jid=$(printf "%02d" $i)
+  cat $filename | sed "s/\$ID/$jid/" | sed "s/\$DDL/$ddl/" | sed "s/\$PRIO/$prio/" > ./jobs/job-$jid.yaml
 done
