@@ -1,6 +1,6 @@
 # Expand the template into multiple files, one for each item to be processed.
 mkdir ./jobs
-filename="templates/${1:-countdown-tmpl.yaml}"
+filename="templates/${1:-countdown-ddl-tmpl.yaml}"
 flag=0
 for i in {01..30}
 do

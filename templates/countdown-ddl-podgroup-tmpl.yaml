@@ -7,9 +7,12 @@ metadata:
 spec:
   template:
     metadata:
+      annotations:
+        simpleddl.scheduling.x-k8s.io/ddl: $DDLs
       name: countdown
       labels:
         jobgroup: countdown
+        scheduling.x-k8s.io/pod-group: countdown
     spec:
       containers:
         - name: counter

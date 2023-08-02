@@ -1,0 +1,7 @@
+apiVersion: scheduling.x-k8s.io/v1alpha1
+kind: PodGroup
+metadata:
+  name: countdown
+spec:
+  scheduleTimeoutSeconds: 30
+  minMember: 10

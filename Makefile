@@ -1,4 +1,4 @@
-FILE:=countdown-tmpl.yaml
+FILE:=countdown-ddl-tmpl.yaml
 CLUSTER:=k8s-multi-node
 TEMP_FOLDER=temp
 POD_COLUMNS:="NAME:.metadata.name,POD_CREATED:.metadata.creationTimestamp,POD_STARTED:.status.startTime,POD_SCHED:.status.conditions[?(@.type==\"PodScheduled\")].lastTransitionTime,STARTED:.status.containerStatuses[*].state.*.startedAt,FINISHED:.status.containerStatuses[*].state.*.finishedAt,NODE:.spec.nodeName,STATUS:.status.containerStatuses[*].state.*.reason,DDL:.metadata.annotations.*,PRIORITY:.spec.priority"
