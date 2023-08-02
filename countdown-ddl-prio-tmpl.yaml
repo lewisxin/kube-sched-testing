@@ -11,21 +11,21 @@ spec:
         simpleddl.scheduling.x-k8s.io/ddl: $DDLs
       name: countdown
       labels:
-        jobgroup: countdown   
+        jobgroup: countdown
     spec:
       containers:
-      - name: counter
-        resources:
-          requests:
-            memory: "100Mi"
-            cpu: "200m"
-          limits:
-            memory: "100Mi"
-            cpu: "200m"
-        image: centos:7
-        command:
-         - "bin/bash"
-         - "-c"
-         - "for i in 9 8 7 6 5 4 3 2 1 ; do echo $i; sleep 1 ; done"
+        - name: counter
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "200m"
+            limits:
+              memory: "100Mi"
+              cpu: "200m"
+          image: centos:7
+          command:
+            - "bin/bash"
+            - "-c"
+            - "for i in 9 8 7 6 5 4 3 2 1 ; do echo $i; sleep 1 ; done"
       restartPolicy: Never
       priorityClassName: $PRIO
