@@ -7,8 +7,11 @@ SCHED_IMAGE:=localhost:5000/scheduler-plugins/kube-scheduler:latest
 
 all: generate
 
+cluster.build:
+	kind build node-image
+	
 cluster.up:
-	kind create cluster --name $(CLUSTER) --config manifests/kind-conf.yaml
+	kind create cluster --image kindest/node:latest --name $(CLUSTER) --config manifests/kind-conf.yaml
 	kind load docker-image $(SCHED_IMAGE) --name $(CLUSTER)
 
 cluster.down:
