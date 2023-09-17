@@ -4,16 +4,17 @@ TEMP_FOLDER=temp
 POD_COLUMNS:="NAME:.metadata.name,POD_CREATED:.metadata.creationTimestamp,POD_STARTED:.status.startTime,POD_SCHED:.status.conditions[?(@.type==\"PodScheduled\")].lastTransitionTime,STARTED:.status.containerStatuses[*].state.*.startedAt,FINISHED:.status.containerStatuses[*].state.*.finishedAt,NODE:.spec.nodeName,STATUS:.status.containerStatuses[*].state.*.reason,DDL:.metadata.annotations.*,PRIORITY:.spec.priority"
 CURRENT_UNIX=$$(date +%s)
 SCHED_IMAGE:=localhost:5000/scheduler-plugins/kube-scheduler:latest
+KIND_BASE_IMG:=
 
 all: generate
 
 cluster.build:
-	kind build node-image
+	kind build node-image --base-image ${KIND_BASE_IMG}
 	
 cluster.up:
 	kind create cluster --image kindest/node:latest --name $(CLUSTER) --config manifests/kind-conf.yaml
 	kind load docker-image $(SCHED_IMAGE) --name $(CLUSTER)
-	kubectl apply -f manifests/clusterrole-sched.yaml
+	# kubectl apply -f manifests/clusterrole-sched.yaml
 
 cluster.down:
 	kind delete cluster --name $(CLUSTER)

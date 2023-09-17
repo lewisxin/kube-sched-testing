@@ -61,15 +61,18 @@ for column in time_columns:
 # Convert the DDL column to seconds
 df['DDL'] = df['DDL'].apply(convert_ddl_to_seconds)
 df['Deadline'] = df['POD_CREATED'] + pd.to_timedelta(df["DDL"], unit="s")
-df['End'] = df['FINISHED']
-df['Start'] = df['POD_CREATED']
-min_start = df["Start"].min()
+df['StartSched'] = df['POD_CREATED']
+df['EndSched'] = df['STARTED']
+df['EndExec'] = df['FINISHED']
+df['StartExec'] = df['STARTED']
+min_start_sched = df["StartSched"].min()
+min_start_exec = df["StartSched"].min()
 
 # Apply the function to extract countdown numbers from the 'NAME' column
 df['NAME'] = df['NAME'].apply(extract_countdown_number)
 
 # Sort the data by the 'NAME' column in ascending order
-df.sort_values(by='NAME', ascending=False, inplace=True)
+df.sort_values(by='NAME', ascending=True, inplace=True)
 
 # Plot the graph
 #plt.figure(figsize=(10, 7))
@@ -86,13 +89,16 @@ df.sort_values(by='NAME', ascending=False, inplace=True)
 # Create a Gantt chart using matplotlib
 fig, ax = plt.subplots(figsize=(10, 6))
 
-color_bar = '#ff7f24'
+color_bar_sched = '#BFCFFF'
+color_bar_exec = '#ff7f24'
 color_line = '#ff4040'
 # Plot the tasks as horizontal bars
 for index, row in df.iterrows():
-    offset = (row["Start"] - min_start).total_seconds()
-    ax.barh(index, width=(row["End"] - row["Start"]).total_seconds(), left=offset, height=0.4, color=color_bar, label="Duration")
-    deadline_x = (row["Deadline"] - min_start).total_seconds()
+    offset_sched = (row["StartSched"] - min_start_sched).total_seconds()
+    offset_exec = (row["StartExec"] - min_start_sched).total_seconds()
+    ax.barh(index, width=(row["EndExec"] - row["StartExec"]).total_seconds(), left=offset_exec, height=0.4, color=color_bar_exec, label="Pod Execution")
+    ax.barh(index, width=(row["EndSched"] - row["StartSched"]).total_seconds(), left=offset_sched, height=0.4, color=color_bar_sched, label="Pod in Queue")
+    deadline_x = (row["Deadline"] - min_start_sched).total_seconds()
     ax.axvline(x=deadline_x, color=color_line, linestyle="--", label="Deadline")
     ax.text(deadline_x + 0.2, index, row["NAME"], verticalalignment="center")
 
@@ -105,8 +111,9 @@ ax.set_title("Gantt Chart for Jobs")
 
 # Configure the legend to show only two items
 line_legend = Line2D([0], [0], color=color_line, linestyle='--', label='Deadline')
-bar_legend = Patch(color=color_bar, label='Duration')
-ax.legend(handles=[line_legend, bar_legend], loc='upper left')
+bar_exec_legend = Patch(color=color_bar_exec, label='Pod Execution')
+bar_sched_legend = Patch(color=color_bar_sched, label='Pod in Queue')
+ax.legend(handles=[line_legend, bar_sched_legend, bar_exec_legend], loc='upper right')
 
 plt.tight_layout()
 

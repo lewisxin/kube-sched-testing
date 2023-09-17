@@ -3,7 +3,7 @@
 mkdir ./jobs
 filename="templates/${1:-countdown-ddl-tmpl.yaml}"
 flag=0
-for i in 1 2 3 4 5 6 7 8 9 10
+for i in {1..9}
 do
   if [ $flag -eq 1 ]; then
       prio="high-priority"
