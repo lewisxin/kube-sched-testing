@@ -1,0 +1,26 @@
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+clientConnection:
+  kubeconfig: /etc/kubernetes/scheduler.conf
+profiles:
+- schedulerName: default-scheduler
+  plugins:
+    queueSort:
+      enabled:
+      - name: EDFPreemptiveScheduling
+      disabled:
+      - name: "*"
+    preFilter:
+      enabled:
+      - name: EDFPreemptiveScheduling
+    filter:
+      enabled:
+      - name: EDFPreemptiveScheduling
+    postFilter:
+      enabled:
+      - name: EDFPreemptiveScheduling
+      disabled:
+      - name: "*"
+    multiPoint:
+      disabled:
+      - name: NodeResourcesFit

@@ -1,9 +1,10 @@
 FILE:=countdown-ddl-tmpl.yaml
 CLUSTER:=k8s-multi-node
 TEMP_FOLDER=temp
-POD_COLUMNS:="NAME:.metadata.name,POD_CREATED:.metadata.creationTimestamp,POD_STARTED:.status.startTime,POD_SCHED:.status.conditions[?(@.type==\"PodScheduled\")].lastTransitionTime,STARTED:.status.containerStatuses[*].state.*.startedAt,FINISHED:.status.containerStatuses[*].state.*.finishedAt,NODE:.spec.nodeName,STATUS:.status.containerStatuses[*].state.*.reason,DDL:.metadata.annotations.*,PRIORITY:.spec.priority"
+POD_COLUMNS:="NAME:.metadata.name,POD_CREATED:.metadata.creationTimestamp,POD_STARTED:.status.startTime,POD_SCHED:.status.conditions[?(@.type==\"PodScheduled\")].lastTransitionTime,STARTED:.status.containerStatuses[*].state.*.startedAt,FINISHED:.status.containerStatuses[*].state.*.finishedAt,NODE:.spec.nodeName,STATUS:.status.containerStatuses[*].state.*.reason,DDL:.metadata.annotations['rt-preemptive\.scheduling\.x-k8s\.io/ddl'],PRIORITY:.spec.priority"
 CURRENT_UNIX=$$(date +%s)
 SCHED_IMAGE:=localhost:5000/scheduler-plugins/kube-scheduler:latest
+POD_IMAGE:=centos:7
 KIND_BASE_IMG:=
 
 all: generate
@@ -14,7 +15,10 @@ cluster.build:
 cluster.up:
 	kind create cluster --image kindest/node:latest --name $(CLUSTER) --config manifests/kind-conf.yaml
 	kind load docker-image $(SCHED_IMAGE) --name $(CLUSTER)
-	# kubectl apply -f manifests/clusterrole-sched.yaml
+	kind load docker-image $(POD_IMAGE) --name $(CLUSTER)
+	kubectl get clusterrole system:kube-scheduler -o yaml | yq e '.rules[] |= (with(select(.resources[] | select(. == "pods")); .verbs += "update"))' > manifests/clusterrole-sched.yaml
+	kubectl apply -f manifests/clusterrole-sched.yaml
+	rm manifests/clusterrole-sched.yaml
 
 cluster.down:
 	kind delete cluster --name $(CLUSTER)
@@ -24,6 +28,12 @@ config.simpleddlscheduler:
 	docker cp manifests/kube-scheduler-simpleddl.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/manifests/kube-scheduler.yaml /etc/kubernetes/kube-scheduler.yaml
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler-simpleddl.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
+
+config.edfpreemptivescheduler:
+	docker cp manifests/edf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
+	docker cp manifests/kube-scheduler-edf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
+	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/manifests/kube-scheduler.yaml /etc/kubernetes/kube-scheduler.yaml
+	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler-edf-preemptive.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
 
 config.disable-noderesources:
 	docker cp manifests/disable-noderesources.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
@@ -51,6 +61,7 @@ deploy.jobs:
 delete.jobs:
 	kubectl delete jobs -l jobgroup=countdown
 	kubectl delete pods -l jobgroup=countdown
+	kubectl delete pods -l jobgroup=stress
 print.pods:
 	kubectl get pods -o custom-columns=$(POD_COLUMNS)
 

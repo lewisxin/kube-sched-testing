@@ -3,7 +3,8 @@ kind: Pod
 metadata:
   name: stress-$ID
   annotations:
-    simpleddl.scheduling.x-k8s.io/ddl: $DDLs
+    rt-preemptive.scheduling.x-k8s.io/ddl: $DDL
+    simpleddl.scheduling.x-k8s.io/ddl: $DDL
   labels:
     jobgroup: stress
 spec:
@@ -12,7 +13,7 @@ spec:
     image: progrium/stress:latest
     resources:
       requests:
-        cpu: "2000m"
+        cpu: 3
     command:
       - "stress"
       - "-c"

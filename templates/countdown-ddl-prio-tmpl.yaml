@@ -8,7 +8,8 @@ spec:
   template:
     metadata:
       annotations:
-        simpleddl.scheduling.x-k8s.io/ddl: $DDLs
+        rt-preemptive.scheduling.x-k8s.io/ddl: $DDL
+        simpleddl.scheduling.x-k8s.io/ddl: $DDL
       name: countdown
       labels:
         jobgroup: countdown
