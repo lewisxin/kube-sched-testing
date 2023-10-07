@@ -46,7 +46,7 @@ columns = [col.strip() for col in lines[0].split()]
 data = [line.split() for line in lines[1:]]
 
 # Create a DataFrame using pandas
-df = pd.DataFrame(data, columns=columns)
+df = pd.DataFrame(data, columns=columns).query('STATUS!="<none>"')
 
 # Convert timestamp columns to datetime objects
 time_columns = ['POD_CREATED', 'POD_SCHED', 'STARTED', 'FINISHED']
