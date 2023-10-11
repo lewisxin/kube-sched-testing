@@ -2,3 +2,6 @@ out/
 jobs/
 plots/
 temp/
+app
+*.log
+*.csv

@@ -23,6 +23,9 @@ cluster.up:
 cluster.down:
 	kind delete cluster --name $(CLUSTER)
 
+podlistener.up:
+	go build -o app . && ./app
+
 config.edfpreemptivescheduler:
 	docker cp manifests/edf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
 	docker cp manifests/kube-scheduler-edf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
