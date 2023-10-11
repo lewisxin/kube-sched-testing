@@ -9,7 +9,7 @@ spec:
     metadata:
       annotations:
         rt-preemptive.scheduling.x-k8s.io/ddl: $DDL
-        simpleddl.scheduling.x-k8s.io/ddl: $DDL
+        rt-preemptive.scheduling.x-k8s.io/exec-time: $EXEC_TIMEs
       name: countdown
       labels:
         jobgroup: countdown

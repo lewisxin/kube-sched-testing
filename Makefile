@@ -23,17 +23,17 @@ cluster.up:
 cluster.down:
 	kind delete cluster --name $(CLUSTER)
 
-config.simpleddlscheduler:
-	docker cp manifests/simpleddl.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
-	docker cp manifests/kube-scheduler-simpleddl.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
-	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/manifests/kube-scheduler.yaml /etc/kubernetes/kube-scheduler.yaml
-	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler-simpleddl.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
-
 config.edfpreemptivescheduler:
 	docker cp manifests/edf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
 	docker cp manifests/kube-scheduler-edf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/manifests/kube-scheduler.yaml /etc/kubernetes/kube-scheduler.yaml
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler-edf-preemptive.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
+
+config.llfpreemptivescheduler:
+	docker cp manifests/llf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
+	docker cp manifests/kube-scheduler-llf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
+	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/manifests/kube-scheduler.yaml /etc/kubernetes/kube-scheduler.yaml
+	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler-llf-preemptive.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
 
 config.disable-noderesources:
 	docker cp manifests/disable-noderesources.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.

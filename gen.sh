@@ -2,7 +2,7 @@
 # Expand the template into multiple files, one for each item to be processed.
 mkdir ./jobs
 FILENAME="templates/${1:-countdown-ddl-tmpl.yaml}"
-EXECUTION_TIMES=(10 20 8 5 15 25 30 5 9 10)
+EXECUTION_TIMES=(10 20 8 7 14 20 30 3 9 6)
 DEADLINES=("10s" "25s" "10s" "10s" "20s" "30s" "32s" "8s" "10s" "10s")
 PRIORITIES=("high-priority", "low-priority")
 

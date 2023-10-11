@@ -4,7 +4,7 @@ metadata:
   name: stress-$ID
   annotations:
     rt-preemptive.scheduling.x-k8s.io/ddl: $DDL
-    simpleddl.scheduling.x-k8s.io/ddl: $DDL
+    rt-preemptive.scheduling.x-k8s.io/exec-time: $EXEC_TIMEs
   labels:
     jobgroup: stress
 spec:

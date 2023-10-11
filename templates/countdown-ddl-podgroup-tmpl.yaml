@@ -8,8 +8,8 @@ spec:
   template:
     metadata:
       annotations:
-        simpleddl.scheduling.x-k8s.io/ddl: $DDL
         rt-preemptive.scheduling.x-k8s.io/ddl: $DDL
+        rt-preemptive.scheduling.x-k8s.io/exec-time: $EXEC_TIMEs
       name: countdown
       labels:
         jobgroup: countdown
@@ -28,5 +28,5 @@ spec:
           command:
             - "bin/bash"
             - "-c"
-            - "for i in 9 8 7 6 5 4 3 2 1 ; do echo $i; sleep 1 ; done"
+            - "for i in {$EXEC_TIME..1}; do echo $i; sleep 1; done"
       restartPolicy: Never
