@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -30,7 +31,7 @@ import (
 const (
 	NamespaceSystem     = "kube-system"
 	NamespaceLocalPath  = "local-path-storage"
-	CSVFileName         = "pod_events.csv"
+	CSVFileName         = "pod_events_%s.csv"
 	TimeFormat          = "2006-01-02 15:04:05.000000"
 	AnnotationKeyPrefix = "rt-preemptive.scheduling.x-k8s.io/"
 	AnnotationKeyDDL    = AnnotationKeyPrefix + "ddl"
@@ -82,12 +83,24 @@ func (w *podEventCSVWriter) Close() {
 }
 
 type PodEvent struct {
-	Start    time.Time
-	End      time.Time
-	NodeName string
-	Deadline time.Time
-	Created  time.Time
+	EventType EventType
+	Start     time.Time
+	End       time.Time
+	NodeName  string
+	Deadline  time.Time
+	Created   time.Time
 }
+
+type EventType int
+
+const (
+	EventTypeCreated EventType = iota
+	EventTypeRunning
+	EventTypePaused
+	EventTypeResumed
+	EventTypeFinished
+	EventTypeFailed
+)
 
 // PodLoggingController logs the name and namespace of pods that are added,
 // deleted, or updated
@@ -99,13 +112,13 @@ type PodLoggingController struct {
 }
 
 // NewPodLoggingController creates a PodLoggingController
-func NewPodLoggingController(informerFactory informers.SharedInformerFactory) (*PodLoggingController, error) {
+func NewPodLoggingController(informerFactory informers.SharedInformerFactory, plugin string) (*PodLoggingController, error) {
 	podInformer := informerFactory.Core().V1().Pods()
 
 	c := &PodLoggingController{
 		informerFactory: informerFactory,
 		podInformer:     podInformer,
-		csvWriter:       NewPodEventCSVWriter(CSVFileName),
+		csvWriter:       NewPodEventCSVWriter(fmt.Sprintf(CSVFileName, plugin)),
 		podEvents:       make(map[string]*PodEvent),
 	}
 	_, err := podInformer.Informer().AddEventHandler(
@@ -149,25 +162,21 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent PodEvent) 
 			Deadline: newEvent.Deadline,
 			Created:  newEvent.Created,
 		}
-		if !newEvent.Start.IsZero() {
-			c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue"})
-		}
-		c.podEvents[podName] = event
-	} else {
-		if !newEvent.Start.IsZero() {
-			event.Start = newEvent.Start
-		}
-		if !newEvent.End.IsZero() {
-			event.End = newEvent.End
-		}
-		if !newEvent.Created.IsZero() {
-			event.Created = newEvent.Created
-		}
-		if len(newEvent.NodeName) > 0 {
-			event.NodeName = newEvent.NodeName
-		}
 	}
-	if !event.Start.IsZero() && !event.End.IsZero() {
+	switch newEvent.EventType {
+	case EventTypeCreated:
+		event.Created = newEvent.Created
+	case EventTypeRunning:
+		event.Start = newEvent.Start
+		if !event.Created.IsZero() {
+			c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue", event.NodeName})
+			var t time.Time
+			event.Created = t
+		}
+	case EventTypeResumed:
+		event.Start = newEvent.Start
+	case EventTypePaused, EventTypeFinished:
+		event.End = newEvent.End
 		// write event to csv and reset start and end
 		if event.End.Before(event.Deadline) {
 			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), "Running", event.NodeName})
@@ -177,15 +186,15 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent PodEvent) 
 		} else {
 			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), "Overdue", event.NodeName})
 		}
-		var t time.Time
-		event.Start = t
-		event.End = t
+	case EventTypeFailed:
+		event.End = newEvent.End
+		if !event.Created.IsZero() {
+			c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue", event.NodeName})
+			var t time.Time
+			event.Created = t
+		}
 	}
-	if !event.Created.IsZero() && !event.End.IsZero() {
-		c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue", event.NodeName})
-		var t time.Time
-		event.End = t
-	}
+	c.podEvents[podName] = event
 }
 
 func (c *PodLoggingController) podAdd(obj interface{}) {
@@ -194,8 +203,11 @@ func (c *PodLoggingController) podAdd(obj interface{}) {
 		return
 	}
 	if pod.Status.Phase == v1.PodRunning {
-		c.writePodEvent(pod.Name, PodEvent{Start: time.Now(), Deadline: getPodDDL(pod), Created: pod.CreationTimestamp.Time})
+		c.writePodEvent(pod.Name, PodEvent{EventType: EventTypeRunning, Start: time.Now()})
 		klog.Infof("POD RUNNING: %s/%s", pod.Namespace, pod.Name)
+	} else {
+		c.writePodEvent(pod.Name, PodEvent{EventType: EventTypeCreated, Deadline: getPodDDL(pod), Created: pod.CreationTimestamp.Time})
+		klog.Infof("POD CREATED: %s/%s", pod.Namespace, pod.Name)
 	}
 }
 
@@ -215,19 +227,19 @@ func (c *PodLoggingController) podUpdate(old, new interface{}) {
 	phasePause := v1.PodPhase("Paused")
 	switch {
 	case oldPhase == v1.PodPending && newPhase == v1.PodRunning:
-		c.writePodEvent(newPod.Name, PodEvent{Start: time.Now(), Deadline: getPodDDL(newPod), Created: newPod.CreationTimestamp.Time})
+		c.writePodEvent(newPod.Name, PodEvent{EventType: EventTypeRunning, Start: time.Now()})
 		klog.Infof("POD RUNNING: %s/%s", newPod.Namespace, newPod.Name)
 	case oldPhase == v1.PodRunning && newPhase == phasePause:
-		c.writePodEvent(newPod.Name, PodEvent{End: time.Now()})
+		c.writePodEvent(newPod.Name, PodEvent{EventType: EventTypePaused, End: time.Now()})
 		klog.Infof("POD PAUSED: %s/%s", newPod.Namespace, newPod.Name)
 	case oldPhase == phasePause && newPhase == v1.PodRunning:
-		c.writePodEvent(newPod.Name, PodEvent{Start: time.Now()})
+		c.writePodEvent(newPod.Name, PodEvent{EventType: EventTypeResumed, Start: time.Now()})
 		klog.Infof("POD RESUMED: %s/%s", newPod.Namespace, newPod.Name)
 	case (oldPhase == v1.PodRunning || oldPhase == phasePause) && newPhase == v1.PodSucceeded:
-		c.writePodEvent(newPod.Name, PodEvent{End: time.Now(), NodeName: newPod.Spec.NodeName})
+		c.writePodEvent(newPod.Name, PodEvent{EventType: EventTypeFinished, End: time.Now(), NodeName: newPod.Spec.NodeName})
 		klog.Infof("POD FINISHED: %s/%s", newPod.Namespace, newPod.Name)
 	case (oldPhase == v1.PodRunning || oldPhase == phasePause || oldPhase == v1.PodPending) && newPhase == v1.PodFailed:
-		c.writePodEvent(newPod.Name, PodEvent{End: time.Now(), Created: newPod.CreationTimestamp.Time, NodeName: newPod.Spec.NodeName})
+		c.writePodEvent(newPod.Name, PodEvent{EventType: EventTypeFailed, End: time.Now(), NodeName: newPod.Spec.NodeName})
 		klog.Infof("POD FAILED: %s/%s", newPod.Namespace, newPod.Name)
 	}
 }
@@ -241,12 +253,14 @@ func (c *PodLoggingController) podDelete(obj interface{}) {
 }
 
 func main() {
+	var plugin *string
 	var kubeconfig *string
 	if home := homedir.HomeDir(); home != "" {
 		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 	} else {
 		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 	}
+	plugin = flag.String("plugin", "", "name of the scheduler plugin")
 	flag.Parse()
 	logs.InitLogs()
 	defer logs.FlushLogs()
@@ -264,7 +278,7 @@ func main() {
 	}
 
 	factory := informers.NewSharedInformerFactory(cs, time.Hour*24)
-	controller, err := NewPodLoggingController(factory)
+	controller, err := NewPodLoggingController(factory, strings.ToLower(*plugin))
 	if err != nil {
 		klog.Fatal(err)
 	}

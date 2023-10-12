@@ -6,6 +6,7 @@ CURRENT_UNIX=$$(date +%s)
 SCHED_IMAGE:=localhost:5000/scheduler-plugins/kube-scheduler:latest
 POD_IMAGE:=centos:7
 KIND_BASE_IMG:=
+PLUGIN:=default
 
 all: generate
 
@@ -24,7 +25,8 @@ cluster.down:
 	kind delete cluster --name $(CLUSTER)
 
 podlistener.up:
-	go build -o app . && ./app
+	go build -o app .
+	./app --plugin=$(PLUGIN)
 
 config.edfpreemptivescheduler:
 	docker cp manifests/edf-preemptive.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
@@ -70,8 +72,7 @@ print.pods:
 
 plot:
 	@mkdir -p $(TEMP_FOLDER) && \
-	kubectl get pods -o custom-columns=$(POD_COLUMNS) > $(TEMP_FOLDER)/pod_status.log && \
-	python graph.py $(TEMP_FOLDER)/pod_status.log
+	python graph.py -i pod_events_$(PLUGIN).csv
 
 log:
 	@mkdir -p out
