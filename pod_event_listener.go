@@ -160,6 +160,9 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent PodEvent) 
 		if !newEvent.End.IsZero() {
 			event.End = newEvent.End
 		}
+		if !newEvent.Created.IsZero() {
+			event.Created = newEvent.Created
+		}
 		if len(newEvent.NodeName) > 0 {
 			event.NodeName = newEvent.NodeName
 		}
@@ -176,6 +179,11 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent PodEvent) 
 		}
 		var t time.Time
 		event.Start = t
+		event.End = t
+	}
+	if !event.Created.IsZero() && !event.End.IsZero() {
+		c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue", event.NodeName})
+		var t time.Time
 		event.End = t
 	}
 }
@@ -218,6 +226,9 @@ func (c *PodLoggingController) podUpdate(old, new interface{}) {
 	case (oldPhase == v1.PodRunning || oldPhase == phasePause) && newPhase == v1.PodSucceeded:
 		c.writePodEvent(newPod.Name, PodEvent{End: time.Now(), NodeName: newPod.Spec.NodeName})
 		klog.Infof("POD FINISHED: %s/%s", newPod.Namespace, newPod.Name)
+	case (oldPhase == v1.PodRunning || oldPhase == phasePause || oldPhase == v1.PodPending) && newPhase == v1.PodFailed:
+		c.writePodEvent(newPod.Name, PodEvent{End: time.Now(), Created: newPod.CreationTimestamp.Time, NodeName: newPod.Spec.NodeName})
+		klog.Infof("POD FAILED: %s/%s", newPod.Namespace, newPod.Name)
 	}
 }
 

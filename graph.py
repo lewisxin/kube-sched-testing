@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import time
 
-df = pd.read_csv(filepath_or_buffer="pod_events.csv", header=0, delimiter=",").sort_values(by=["Node","Status"])
+df = pd.read_csv(filepath_or_buffer="pod_events.csv", header=0, delimiter=",").sort_values(by=["Job","Status"])
 
 colors = {
     "In Queue": "#29b6f6",
