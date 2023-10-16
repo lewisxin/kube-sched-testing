@@ -152,7 +152,17 @@ func (c *PodLoggingController) Run(stopCh chan struct{}) error {
 	return nil
 }
 
+// trimPodName removes the unique idenfitier attached to a pod name
+func trimPodName(str string) string {
+	lastDash := strings.LastIndex(str, "-")
+	if lastDash != -1 {
+		return str[:lastDash]
+	}
+	return str
+}
+
 func (c *PodLoggingController) writePodEvent(podName string, newEvent PodEvent) {
+	podName = trimPodName(podName)
 	event, ok := c.podEvents[podName]
 	if !ok || event == nil {
 		event = &PodEvent{
