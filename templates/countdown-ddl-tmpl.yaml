@@ -1,15 +1,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: countdown-$ID
+  name: countdown-<% .ID %>
   labels:
     jobgroup: countdown
 spec:
   template:
     metadata:
       annotations:
-        rt-preemptive.scheduling.x-k8s.io/ddl: $DDL
-        rt-preemptive.scheduling.x-k8s.io/exec-time: $EXEC_TIMEs
+        rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>s
+        rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>s
       name: countdown
       labels:
         jobgroup: countdown
@@ -18,12 +18,12 @@ spec:
         - name: counter
           resources:
             requests:
-              cpu: 3
+              cpu: 4
             limits:
-              cpu: 3
+              cpu: 4
           image: centos:7
           command:
             - "bin/bash"
             - "-c"
-            - "for i in {$EXEC_TIME..1}; do echo $i; sleep 1; done"
+            - "for i in {<% .ExecutionTime %>..1}; do echo $i; sleep 1; done"
       restartPolicy: Never
