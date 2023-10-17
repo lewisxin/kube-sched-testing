@@ -1,9 +1,9 @@
 import plotly.express as px
 import pandas as pd
 import os
-import time
 import sys
 import getopt
+from datetime import datetime
 
 
 def plot(inputfile):
@@ -23,8 +23,9 @@ def plot(inputfile):
     folder = "plots"
     if not os.path.exists(folder):
         os.makedirs(folder)
-    current_timestamp = int(time.time())
-    output = f'{folder}/gantt_{current_timestamp}.png'
+    current_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    name = inputfile.removesuffix(".csv")
+    output = f'{folder}/{current_time}_gantt_{name}.png'
     fig.write_image(output)
 
 
