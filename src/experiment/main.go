@@ -7,11 +7,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/kube-sched-testing/src/experiment/parser"
+	"k8s.io/component-base/logs"
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -43,26 +48,27 @@ func main() {
 	dataFile = flag.String("d", "", "data file for the template")
 	flag.Parse()
 	validateFlags()
+	logs.InitLogs()
+	defer logs.FlushLogs()
 	dFile, err := os.Open(*dataFile)
 	if err != nil {
-		log.Fatalf("failed to open data file: %s", err)
+		klog.Fatalf("failed to open data file: %s", err)
 	}
 	defer dFile.Close()
 	reader := csv.NewReader(dFile)
 	rows, err := reader.ReadAll()
 	if err != nil {
-		log.Fatalf("failed to read data file: %s", err)
+		klog.Fatalf("failed to read data file: %s", err)
 	}
 
 	if _, err := os.Stat(outputPath); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(outputPath, os.ModePerm)
 		if err != nil {
-			log.Fatalf("directory %s does not exist, attempt to create failed: %s", outputPath, err)
+			klog.Fatalf("directory %s does not exist, attempt to create failed: %s", outputPath, err)
 		}
 	}
 
-	var arrivalTimes []int
-	var outputFiles []string
+	var wg sync.WaitGroup
 	for i, row := range rows {
 		if i == 0 {
 			// skip header
@@ -70,9 +76,9 @@ func main() {
 		}
 		arrivalT, err := strconv.Atoi(row[1])
 		if err != nil {
-			log.Fatalf("failed to parse arrival time of job %d: %s", i, err)
+			wg.Done()
+			klog.Fatalf("failed to parse arrival time of job %d: %s", i, err)
 		}
-		arrivalTimes = append(arrivalTimes, arrivalT)
 		data := parser.Data{
 			ID:            row[0],
 			DDL:           row[2],
@@ -80,12 +86,31 @@ func main() {
 			Priority:      row[4],
 		}
 		outputFile := filepath.Join(outputPath, fmt.Sprintf("job-%s.yaml", data.ID))
-		outputFiles = append(outputFiles, outputFile)
 		if err := parser.ParseYAML(*templateFile, data, outputFile); err != nil {
-			log.Fatalf("failed to parse yaml for job %d: %s", i, err)
+			wg.Done()
+			klog.Fatalf("failed to parse yaml for job %d: %s", i, err)
 		}
+		wg.Add(1)
+		go func() {
+			time.Sleep(time.Duration(arrivalT) * time.Second)
+			klog.Infof("deploying job %s", outputFile)
+			deployJob(outputFile)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	// TODO: use count to run experiment multiple times
+}
+
+func deployJob(jobFile string) {
+	cmd := exec.Command("kubectl", "apply", "-f", jobFile)
+	stdout, err := cmd.Output()
+
+	if err != nil {
+		klog.Error(err)
+		return
 	}
 
-	// TODO: deploy jobs based on arrival time
-	// TODO: use count to run experiment multiple times
+	// Print the output
+	klog.Info(string(stdout))
 }
