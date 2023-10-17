@@ -45,24 +45,14 @@ config.disable-noderesources:
 config.defaultscheduler:
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
 
-generate: clean
-	sh gen.sh $(FILE)
-
-exp:
-	sh exp.sh
-
-deploy: deploy.prios deploy.jobs
-
 deploy.prios:
 	kubectl apply -f prios
-
-deploy.jobs:
-	kubectl apply -f jobs
 
 delete.jobs:
 	kubectl delete jobs -l jobgroup=countdown
 	kubectl delete pods -l jobgroup=countdown
 	kubectl delete pods -l jobgroup=stress
+
 print.pods:
 	kubectl get pods -o custom-columns=$(POD_COLUMNS)
 
@@ -79,5 +69,9 @@ clean:
 	rm -rf jobs $(TEMP_FOLDER)
 
 podlistener.up:
-	go build -o app ./src/eventlistener
-	./app --plugin=$(PLUGIN)
+	go build -o ./build/podlistener ./src/eventlistener
+	./build/podlistener --plugin=$(PLUGIN)
+
+exp.run:
+	go build -o ./build/exp ./src/experiment
+	./build/exp -t templates/${FILE} -d data/jobs.csv

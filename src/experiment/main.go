@@ -33,7 +33,7 @@ func validateFlags() {
 	}
 	if strings.Trim(*dataFile, " ") == "" {
 		klog.Fatal("data CSV file is required, use flag -d to pass it as arg")
-		klog.Fatal("create a CSV file with the headers: id,arrival_time,ddl,execution_time,priority")
+		klog.Fatal("create a CSV file with the headers: id,arrival_time,execution_time,ddl,priority")
 	}
 }
 func main() {
@@ -74,8 +74,8 @@ func main() {
 		}
 		data := parser.Data{
 			ID:            row[0],
-			DDL:           row[2],
-			ExecutionTime: row[3],
+			ExecutionTime: row[2],
+			DDL:           row[3],
 			Priority:      row[4],
 		}
 		outputFile := filepath.Join(outputPath, fmt.Sprintf("job-%s.yaml", data.ID))

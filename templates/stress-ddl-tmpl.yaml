@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: stress-$ID
+  name: stress-<% .ID %>
   annotations:
-    rt-preemptive.scheduling.x-k8s.io/ddl: $DDL
-    rt-preemptive.scheduling.x-k8s.io/exec-time: $EXEC_TIMEs
+    rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>s
+    rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>s
   labels:
     jobgroup: stress
 spec:

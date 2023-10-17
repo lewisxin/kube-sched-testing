@@ -1,7 +1,10 @@
 out/
 jobs/
+jobs-bak/
 plots/
 temp/
 app
 *.log
 *.csv
+!data/jobs.csv
+build/
