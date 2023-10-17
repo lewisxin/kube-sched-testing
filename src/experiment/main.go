@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,26 +23,20 @@ const (
 )
 
 var (
-	dataFileHeaders = []string{"id", "arrival_time", "ddl", "execution_time", "priority"}
-)
-
-var (
-	count        *int
 	templateFile *string
 	dataFile     *string
 )
 
 func validateFlags() {
 	if strings.Trim(*templateFile, " ") == "" {
-		log.Fatal("template YAML file is required, use flag -t to pass it as arg")
+		klog.Fatal("template YAML file is required, use flag -t to pass it as arg")
 	}
 	if strings.Trim(*dataFile, " ") == "" {
-		log.Fatal("data CSV file is required, use flag -d to pass it as arg")
+		klog.Fatal("data CSV file is required, use flag -d to pass it as arg")
+		klog.Fatal("create a CSV file with the headers: id,arrival_time,ddl,execution_time,priority")
 	}
-
 }
 func main() {
-	count = flag.Int("n", 0, "number of times the experiment should run")
 	templateFile = flag.String("t", "", "template file for the deployment")
 	dataFile = flag.String("d", "", "data file for the template")
 	flag.Parse()
@@ -99,7 +92,6 @@ func main() {
 		}()
 	}
 	wg.Wait()
-	// TODO: use count to run experiment multiple times
 }
 
 func deployJob(jobFile string) {
