@@ -97,13 +97,23 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent podevent.E
 			Created:  newEvent.Created,
 		}
 	}
+	if event.NodeName == "" {
+		event.NodeName = newEvent.NodeName
+	}
 	switch newEvent.EventType {
 	case podevent.TypeCreated:
 		event.Created = newEvent.Created
 	case podevent.TypeRunning:
 		event.Start = newEvent.Start
 		if !event.Created.IsZero() {
-			c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue", event.NodeName})
+			if event.Start.Before(event.Deadline) {
+				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue", event.NodeName})
+			} else if event.Created.Before(event.Deadline) {
+				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue", event.NodeName})
+				c.csvWriter.Append([]string{podName, event.Deadline.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
+			} else {
+				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
+			}
 			var t time.Time
 			event.Created = t
 		}
@@ -116,14 +126,21 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent podevent.E
 			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), "Running", event.NodeName})
 		} else if event.Start.Before(event.Deadline) {
 			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.Deadline.Format(TimeFormat), "Running"})
-			c.csvWriter.Append([]string{podName, event.Deadline.Format(TimeFormat), event.End.Format(TimeFormat), "Overdue", event.NodeName})
+			c.csvWriter.Append([]string{podName, event.Deadline.Format(TimeFormat), event.End.Format(TimeFormat), "Running (Overdue)", event.NodeName})
 		} else {
-			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), "Overdue", event.NodeName})
+			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), "Running (Overdue)", event.NodeName})
 		}
 	case podevent.TypeFailed:
 		event.End = newEvent.End
 		if !event.Created.IsZero() {
-			c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue", event.NodeName})
+			if event.End.Before(event.Deadline) {
+				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue", event.NodeName})
+			} else if event.Created.Before(event.Deadline) {
+				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue", event.NodeName})
+				c.csvWriter.Append([]string{podName, event.Deadline.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
+			} else {
+				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
+			}
 			var t time.Time
 			event.Created = t
 		}

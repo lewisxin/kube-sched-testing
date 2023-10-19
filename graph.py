@@ -11,8 +11,9 @@ def plot(inputfile):
                      delimiter=",").sort_values(by=["Job", "Status"])
     colors = {
         "In Queue": "#29b6f6",
+        "In Queue (Overdue)": "#fc938b",
         "Running": "#66bb6a",
-        "Overdue": "#f44336"
+        "Running (Overdue)": "#f44336"
     }
     fig = px.timeline(df, x_start="Start", x_end="End", y="Job",
                       color="Status", color_discrete_map=colors, text="Node")
