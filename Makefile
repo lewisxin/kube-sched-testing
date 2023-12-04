@@ -11,7 +11,7 @@ PLUGIN:=default
 all: generate
 
 cluster.build:
-	kind build node-image --base-image ${KIND_BASE_IMG}
+	GOFLAGS='-buildvcs=false' kind build node-image --base-image ${KIND_BASE_IMG}
 	
 cluster.up:
 	kind create cluster --image kindest/node:latest --name $(CLUSTER) --config manifests/kind-conf.yaml
