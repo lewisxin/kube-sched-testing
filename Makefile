@@ -4,7 +4,6 @@ TEMP_FOLDER=temp
 POD_COLUMNS:="NAME:.metadata.name,POD_CREATED:.metadata.creationTimestamp,POD_STARTED:.status.startTime,POD_SCHED:.status.conditions[?(@.type==\"PodScheduled\")].lastTransitionTime,STARTED:.status.containerStatuses[*].state.*.startedAt,FINISHED:.status.containerStatuses[*].state.*.finishedAt,NODE:.spec.nodeName,STATUS:.status.containerStatuses[*].state.*.reason,DDL:.metadata.annotations['rt-preemptive\.scheduling\.x-k8s\.io/ddl'],PRIORITY:.spec.priority"
 CURRENT_UNIX=$$(date +%s)
 SCHED_IMAGE:=localhost:5000/scheduler-plugins/kube-scheduler:latest
-POD_IMAGE:=centos:7
 KIND_BASE_IMG:=
 PLUGIN:=default
 
@@ -16,10 +15,13 @@ cluster.build:
 cluster.up:
 	kind create cluster --image kindest/node:latest --name $(CLUSTER) --config manifests/kind-conf.yaml
 	kind load docker-image $(SCHED_IMAGE) --name $(CLUSTER)
-	kind load docker-image $(POD_IMAGE) --name $(CLUSTER)
 	kubectl get clusterrole system:kube-scheduler -o yaml | yq e '.rules[] |= (with(select(.resources[] | select(. == "pods")); .verbs += "update"))' > manifests/clusterrole-sched.yaml
 	kubectl apply -f manifests/clusterrole-sched.yaml
 	rm manifests/clusterrole-sched.yaml
+
+cluster.load-image:
+	kind load docker-image centos:7 --name $(CLUSTER)
+	kind load docker-image video-transcoding:latest --name $(CLUSTER)
 
 cluster.down:
 	kind delete cluster --name $(CLUSTER)
@@ -44,6 +46,17 @@ config.disable-noderesources:
 
 config.defaultscheduler:
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
+
+config.pv:
+	docker exec $(CLUSTER)-worker mkdir -p /mnt/videos
+	kubectl apply -f manifests/storage-class.yaml
+	kubectl apply -f manifests/pv-volume.yaml
+	kubectl apply -f manifests/pvc.yaml
+	docker cp apps/video-transcoding/input.mp4 $(CLUSTER)-worker:/mnt/videos
+
+dump.pv:
+	mkdir -p temp
+	docker cp $(CLUSTER)-worker:/mnt/videos temp/
 
 deploy.prios:
 	kubectl apply -f prios
@@ -75,3 +88,6 @@ podlistener.up:
 exp.run:
 	go build -o ./build/exp ./src/experiment
 	./build/exp -t templates/${FILE} -d data/jobs.csv
+
+image.build:
+	docker build -t video-transcoding ./apps/video-transcoding

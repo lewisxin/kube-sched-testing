@@ -7,13 +7,16 @@ def transcode_segment(input_file, output_file, segment, segment_duration, total_
     start_time = segment * segment_duration
     end_time = min((segment + 1) * segment_duration, total_duration)
 
-    # Extract the file extension from the output_file argument
+    input_file_name = os.path.splitext(os.path.basename(input_file))[0]
     output_file_extension = os.path.splitext(output_file)[1][1:]  # Remove the leading dot
+    output_directory = os.path.dirname(output_file)
+    os.makedirs(output_directory, exist_ok=True)
+    output_file_path = os.path.join(output_directory, f'{input_file_name}_p{segment}.{output_file_extension}')
 
     # Construct the ffmpeg command for the specific segment
     (
         ffmpeg.input(input_file, ss=start_time)
-        .output(f'output_{segment}.{output_file_extension}', vcodec='libx264', acodec='aac', t=end_time - start_time, strict='experimental')
+        .output(output_file_path, vcodec='libx264', acodec='aac', t=end_time - start_time, strict='experimental')
         .run()
     )
 

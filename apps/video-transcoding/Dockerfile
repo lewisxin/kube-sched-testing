@@ -21,4 +21,4 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Run transcode.py when the container launches
-CMD ["python", "transcode.py", "input.mp4", "output.mov", "4", "1"]
+CMD ["python", "transcode.py", "input.mp4", "./transcoded/output.mov", "4", "1"]

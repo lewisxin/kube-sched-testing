@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: process-video
+  labels:
+    name: process-video
+spec:
+  containers:
+  - name: app
+    image: video-transcoding:latest
+    imagePullPolicy: Never
+    command: ["python", "transcode.py", "/mnt/input.mp4", "/mnt/output.mov", "4", "1"]
+    volumeMounts:
+      - name: videos
+        mountPath: /mnt
+  volumes:
+    - name: videos
+      persistentVolumeClaim:
+        claimName: local-pvc
+  restartPolicy: Never
