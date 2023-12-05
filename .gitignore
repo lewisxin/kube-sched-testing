@@ -4,7 +4,11 @@ jobs-bak/
 plots/
 temp/
 app
+files/
 *.log
 *.csv
 !data/jobs.csv
 build/
+*.mov
+*.mp4
+.DS_Store

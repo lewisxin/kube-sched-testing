@@ -26,14 +26,11 @@ def main():
     parser = argparse.ArgumentParser(description='Transcode video segments based on the output file type')
     parser.add_argument('input_file', help='Input video file (e.g., input.mp4)')
     parser.add_argument('output_file', help='Output video file (e.g., output.mov or output.mp4)')
-    parser.add_argument('num_segments', type=int, help='Number of segments')
+    parser.add_argument('num_segments', type=int, help='Total number of segments')
+    parser.add_argument('segment', type=int, help='The segment to process')
     args = parser.parse_args()
-
     total_duration = get_total_duration(args.input_file)  # Calculate the total duration of the input video
-
-    # Transcode each segment
-    for segment in range(args.num_segments):
-        transcode_segment(args.input_file, args.output_file, segment, total_duration / args.num_segments, total_duration)
+    transcode_segment(args.input_file, args.output_file, args.segment, total_duration / args.num_segments, total_duration)
 
 if __name__ == "__main__":
     main()

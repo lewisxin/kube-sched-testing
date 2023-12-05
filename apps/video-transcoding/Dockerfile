@@ -10,7 +10,6 @@ FROM base as runtime
 COPY --from=ffmpeg-installer /usr/bin/ffprobe /usr/bin/ffprobe
 COPY --from=ffmpeg-installer /usr/bin/ffmpeg /usr/bin/ffmpeg
 COPY --from=ffmpeg-installer /usr/lib/*-linux-gnu/* /usr/lib/
-COPY --from=ffmpeg-installer /lib/*-linux-gnu/* /usr/lib/
 
 # Set the working directory in the container
 WORKDIR /app
@@ -22,4 +21,4 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Run transcode.py when the container launches
-CMD ["python", "transcode.py", "input.mov", "output.mp4", "4"]
+CMD ["python", "transcode.py", "input.mp4", "output.mov", "4", "1"]
