@@ -47,16 +47,19 @@ config.disable-noderesources:
 config.defaultscheduler:
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
 
-config.pv:
-	docker exec $(CLUSTER)-worker mkdir -p /mnt/videos
+pv.config:
 	kubectl apply -f manifests/storage-class.yaml
 	kubectl apply -f manifests/pv-volume.yaml
 	kubectl apply -f manifests/pvc.yaml
-	docker cp apps/video-transcoding/input.mp4 $(CLUSTER)-worker:/mnt/videos
 
-dump.pv:
-	mkdir -p temp
-	docker cp $(CLUSTER)-worker:/mnt/videos temp/
+pv.reload: pv.config
+	docker exec $(CLUSTER)-worker rm -rf /mnt/videos
+	docker exec $(CLUSTER)-worker mkdir -p /mnt/videos
+	docker cp apps/video-transcoding/data/input.mp4 $(CLUSTER)-worker:/mnt/videos
+
+pv.dump:
+	mkdir -p temp/dump
+	docker cp $(CLUSTER)-worker:/mnt/videos temp/dump/
 
 deploy.prios:
 	kubectl apply -f prios
