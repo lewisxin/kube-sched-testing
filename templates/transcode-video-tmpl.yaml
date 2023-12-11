@@ -3,8 +3,8 @@ kind: Job
 metadata:
   name: video-transcoding-indexed
 spec:
-  completions: 5
-  parallelism: 5
+  completions: 3
+  parallelism: 3
   completionMode: Indexed
   template:
     spec:
@@ -13,12 +13,14 @@ spec:
         - name: video-transcoding
           image: video-transcoding:latest
           imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: 4
           command:
             - python
             - transcode.py
-            - /mnt/input.mp4
-            - /mnt/transcoded/output.mov
-            - "5"
+            - /mnt/videos/input.mp4 # input file path
+            - /mnt/videos/input/transcoded # output file path
             - $(JOB_COMPLETION_INDEX)
           volumeMounts:
             - name: videos
@@ -26,4 +28,4 @@ spec:
       volumes:
         - name: videos
           persistentVolumeClaim:
-            claimName: local-pvc
+            claimName: nfs

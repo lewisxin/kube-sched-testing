@@ -11,4 +11,6 @@ files/
 build/
 *.mov
 *.mp4
+*.ts
+*.m3u8
 .DS_Store
