@@ -19,13 +19,13 @@ cluster.build:
 	
 cluster.up:
 	kind create cluster --image kindest/node:latest --name $(CLUSTER) --config manifests/kind-conf.yaml
-	kind load docker-image $(SCHED_IMAGE) --name $(CLUSTER)
 	kubectl get clusterrole system:kube-scheduler -o yaml | yq e '.rules[] |= (with(select(.resources[] | select(. == "pods")); .verbs += "update"))' > manifests/clusterrole-sched.yaml
 	kubectl apply -f manifests/clusterrole-sched.yaml
 	rm manifests/clusterrole-sched.yaml
 	make cluster.load-image
 
 cluster.load-image:
+	kind load docker-image $(SCHED_IMAGE) --name $(CLUSTER)
 	kind load docker-image video-transcoding:latest --name $(CLUSTER)
 
 cluster.down:
@@ -50,7 +50,9 @@ config.disable-noderesources:
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler-disable-noderesources.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
 
 config.defaultscheduler:
-	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
+	docker cp manifests/kube-scheduler-default.yaml $(CLUSTER)-control-plane:/etc/kubernetes/.
+	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/manifests/kube-scheduler.yaml /etc/kubernetes/kube-scheduler.yaml
+	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler-default.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
 
 pv.config:
 	kubectl apply -f nfs
@@ -64,7 +66,10 @@ pv.reload:
 
 pv.dump:
 	mkdir -p temp/dump
+	pv_name=$$(kubectl get pv -o custom-columns=NAME:.metadata.name --no-headers); \
+	docker exec $(CLUSTER)-worker cp -r /tmp/nfs-provisioner/$$pv_name/videos /mnt/; \
 	docker cp $(CLUSTER)-worker:/mnt/videos temp/dump/
+	docker exec $(CLUSTER)-worker rm -rf /mnt/videos
 
 deploy.prios:
 	kubectl apply -f prios

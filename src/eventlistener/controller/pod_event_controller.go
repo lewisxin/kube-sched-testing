@@ -150,7 +150,7 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent podevent.E
 
 func (c *PodLoggingController) podAdd(obj interface{}) {
 	pod := obj.(*v1.Pod)
-	if pod.Namespace == NamespaceSystem || pod.Namespace == NamespaceLocalPath {
+	if pod.Namespace == NamespaceSystem || pod.Namespace == NamespaceLocalPath || strings.HasPrefix(pod.Name, "nfs") {
 		return
 	}
 	if pod.Status.Phase == v1.PodRunning {
