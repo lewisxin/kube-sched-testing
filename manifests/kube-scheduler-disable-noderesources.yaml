@@ -16,7 +16,7 @@ spec:
     - --bind-address=127.0.0.1
     - --config=/etc/kubernetes/disable-noderesources.yaml
     - --leader-elect=true
-    image: registry.k8s.io/kube-scheduler:v1.28.0-lewis-dirty
+    image: localhost:5000/scheduler-plugins/kube-scheduler:latest
     imagePullPolicy: IfNotPresent
     livenessProbe:
       failureThreshold: 8

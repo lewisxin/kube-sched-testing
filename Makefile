@@ -9,6 +9,11 @@ PLUGIN:=default
 
 all: generate
 
+helm.install:
+	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+	chmod 700 get_helm.sh
+	./get_helm.sh
+
 cluster.build:
 	GOFLAGS='-buildvcs=false' kind build node-image --base-image ${KIND_BASE_IMG}
 	
@@ -18,9 +23,9 @@ cluster.up:
 	kubectl get clusterrole system:kube-scheduler -o yaml | yq e '.rules[] |= (with(select(.resources[] | select(. == "pods")); .verbs += "update"))' > manifests/clusterrole-sched.yaml
 	kubectl apply -f manifests/clusterrole-sched.yaml
 	rm manifests/clusterrole-sched.yaml
+	make cluster.load-image
 
 cluster.load-image:
-	kind load docker-image centos:7 --name $(CLUSTER)
 	kind load docker-image video-transcoding:latest --name $(CLUSTER)
 
 cluster.down:
@@ -48,14 +53,14 @@ config.defaultscheduler:
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
 
 pv.config:
-	kubectl apply -f manifests/storage-class.yaml
-	kubectl apply -f manifests/pv-volume.yaml
-	kubectl apply -f manifests/pvc.yaml
+	kubectl apply -f nfs
 
-pv.reload: pv.config
-	docker exec $(CLUSTER)-worker rm -rf /mnt/videos
-	docker exec $(CLUSTER)-worker mkdir -p /mnt/videos
-	docker cp apps/video-transcoding/data/input.mp4 $(CLUSTER)-worker:/mnt/videos
+pv.reload:
+	pv_name=$$(kubectl get pv -o custom-columns=NAME:.metadata.name --no-headers); \
+	docker exec $(CLUSTER)-worker rm -rf /tmp/nfs-provisioner/$$pv_name/videos; \
+	docker exec $(CLUSTER)-worker mkdir -p /tmp/nfs-provisioner/$$pv_name/videos; \
+	docker cp apps/video-transcoding/data/input.mp4 $(CLUSTER)-worker:/mnt; \
+	docker exec $(CLUSTER)-worker mv /mnt/input.mp4 /tmp/nfs-provisioner/$$pv_name/videos
 
 pv.dump:
 	mkdir -p temp/dump
