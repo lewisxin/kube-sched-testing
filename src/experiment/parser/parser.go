@@ -12,6 +12,8 @@ type Data struct {
 	ExecutionTime string
 	ID            string
 	Priority      string
+	InputFile     string
+	InputFileExt  string
 }
 
 func ParseYAML(templateFile string, data Data, outputFile string) error {

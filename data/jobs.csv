@@ -1,11 +1,4 @@
-id,arrival_time,execution_time,ddl,priority
-01,0,2,5,
-02,1,1,4,
-03,2,2,7,
-04,3,3,10,
-05,4,1,7,
-06,5,3,12,
-07,6,1,10,
-08,7,2,13,
-09,8,1,12,
-10,9,3,16,
+id,arrival_time,execution_time,ddl,priority,filename,ext
+01,0,180,200,,trailer1,mp4
+02,5,150,180,,trailer2,mp4
+03,10,80,150,,trailer3,mp4

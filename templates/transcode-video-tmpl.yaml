@@ -1,12 +1,18 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: video-transcoding-indexed
+  name: video-transcoding-<% .InputFile %>
+  labels:
+    jobgroup: video-transcoding
 spec:
   completions: 3
   parallelism: 3
   completionMode: Indexed
   template:
+    metadata:
+      annotations:
+        rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>s
+        rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>s
     spec:
       restartPolicy: Never
       containers:
@@ -19,8 +25,8 @@ spec:
           command:
             - python
             - transcode.py
-            - /mnt/videos/input.mp4 # input file path
-            - /mnt/videos/input/transcoded # output file path
+            - /mnt/videos/<% .InputFile %>.<% .InputFileExt %> # input file path
+            - /mnt/videos/<% .InputFile %>/transcoded # output file path
             - $(JOB_COMPLETION_INDEX)
           volumeMounts:
             - name: videos

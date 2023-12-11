@@ -77,6 +77,8 @@ func main() {
 			ExecutionTime: row[2],
 			DDL:           row[3],
 			Priority:      row[4],
+			InputFile:     row[5],
+			InputFileExt:  row[6],
 		}
 		outputFile := filepath.Join(outputPath, fmt.Sprintf("job-%s.yaml", data.ID))
 		if err := parser.ParseYAML(*templateFile, data, outputFile); err != nil {

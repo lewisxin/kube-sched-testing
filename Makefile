@@ -1,4 +1,4 @@
-FILE:=countdown-ddl-tmpl.yaml
+FILE:=transcode-video-tmpl.yaml
 CLUSTER:=k8s-multi-node
 TEMP_FOLDER=temp
 POD_COLUMNS:="NAME:.metadata.name,POD_CREATED:.metadata.creationTimestamp,POD_STARTED:.status.startTime,POD_SCHED:.status.conditions[?(@.type==\"PodScheduled\")].lastTransitionTime,STARTED:.status.containerStatuses[*].state.*.startedAt,FINISHED:.status.containerStatuses[*].state.*.finishedAt,NODE:.spec.nodeName,STATUS:.status.containerStatuses[*].state.*.reason,DDL:.metadata.annotations['rt-preemptive\.scheduling\.x-k8s\.io/ddl'],PRIORITY:.spec.priority"
@@ -59,8 +59,8 @@ pv.reload:
 	pv_name=$$(kubectl get pv -o custom-columns=NAME:.metadata.name --no-headers); \
 	docker exec $(CLUSTER)-worker rm -rf /tmp/nfs-provisioner/$$pv_name/videos; \
 	docker exec $(CLUSTER)-worker mkdir -p /tmp/nfs-provisioner/$$pv_name/videos; \
-	docker cp apps/video-transcoding/data/input.mp4 $(CLUSTER)-worker:/mnt; \
-	docker exec $(CLUSTER)-worker mv /mnt/input.mp4 /tmp/nfs-provisioner/$$pv_name/videos
+	docker cp apps/video-transcoding/data/. $(CLUSTER)-worker:/mnt; \
+	docker exec $(CLUSTER)-worker mv /mnt/trailer1.mp4 /mnt/trailer2.mp4 /mnt/trailer3.mp4 /tmp/nfs-provisioner/$$pv_name/videos
 
 pv.dump:
 	mkdir -p temp/dump
@@ -70,6 +70,7 @@ deploy.prios:
 	kubectl apply -f prios
 
 delete.jobs:
+	kubectl delete jobs -l jobgroup=video-transcoding
 	kubectl delete jobs -l jobgroup=countdown
 	kubectl delete pods -l jobgroup=countdown
 	kubectl delete pods -l jobgroup=stress
