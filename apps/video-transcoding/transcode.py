@@ -1,6 +1,7 @@
 import ffmpeg
 import argparse
 import os
+import sys
 
 supported_resolutions = ["640x360", "1280x720", "1920x1080"]
 bandwith = {
@@ -23,7 +24,7 @@ def generate_master_playlist(output_directory, resolutions):
             master_playlist.write(f"#EXT-X-STREAM-INF:BANDWIDTH={bandwith[resolution]},RESOLUTION={resolution}\n")
             master_playlist.write(f"{playlist_file}\n")
 
-def transcode_segment(input_file, output_directory, total_duration, resolution):
+def transcode(input_file, output_directory, total_duration, resolution):
     width, height = map(int, resolution.split('x'))
     output_directory = os.path.join(output_directory, f'{width}x{height}')
     os.makedirs(output_directory, exist_ok=True)
@@ -53,10 +54,26 @@ def main():
     parser.add_argument('resolution_index', help='Index of resolution of the output HLS streams (0=640x360, 1=1280x720, 2=1920x1080)')
     args = parser.parse_args()
 
-    total_duration = get_total_duration(args.input_file)
+    total_duration = 0
+    try:
+        total_duration = get_total_duration(args.input_file)
+    except Exception as e:
+        print(f'failed to get total duration of the pod')
+        print('stderr:', e.stderr.decode('utf8'))
+        raise e
 
-    transcode_segment(args.input_file, args.output_directory, total_duration, supported_resolutions[int(args.resolution_index)])
-    generate_master_playlist(args.output_directory, supported_resolutions)
+    try:
+        transcode(args.input_file, args.output_directory, total_duration, supported_resolutions[int(args.resolution_index)])
+    except Exception as e:
+        print(f'failed to transcode the video')
+        raise e
+    
+    try:    
+        generate_master_playlist(args.output_directory, supported_resolutions)
+    except Exception as e:
+        print(f'failed to create master playlist')
+        raise e
+   
 
 if __name__ == "__main__":
     main()
