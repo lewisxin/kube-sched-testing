@@ -33,7 +33,7 @@ def transcode_segment(input_file, output_directory, total_duration, resolution):
     ffmpeg.input(input_file).output(
         output_file_path,
         vcodec='libx264',
-        acodec='aac',
+        acodec='copy',
         t=total_duration,
         vf=f'scale={width}:{height}',
         hls_time=20,
