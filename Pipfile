@@ -8,6 +8,8 @@ matplotlib = "*"
 numpy = "*"
 pandas = "*"
 plotly = "*"
+pyyaml = "*"
+scikit-learn = "*"
 
 [dev-packages]
 

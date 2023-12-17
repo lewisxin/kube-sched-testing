@@ -27,6 +27,7 @@ cluster.up:
 cluster.load-image:
 	kind load docker-image $(SCHED_IMAGE) --name $(CLUSTER)
 	kind load docker-image video-transcoding:latest --name $(CLUSTER)
+	kind load docker-image hyperparam-tuning:latest --name $(CLUSTER)
 
 cluster.down:
 	kind delete cluster --name $(CLUSTER)
@@ -57,25 +58,28 @@ config.defaultscheduler:
 pv.config:
 	kubectl apply -f nfs
 
+pv.rm:
+	kubectl delete -f nfs
+
 pv.reload:
 	pv_name=$$(kubectl get pv -o custom-columns=NAME:.metadata.name --no-headers); \
-	docker exec $(CLUSTER)-worker rm -rf /tmp/nfs-provisioner/$$pv_name/videos; \
-	docker exec $(CLUSTER)-worker mkdir -p /tmp/nfs-provisioner/$$pv_name/videos; \
-	docker cp apps/video-transcoding/data/. $(CLUSTER)-worker:/mnt; \
-	docker exec $(CLUSTER)-worker mv /mnt/trailer1.mp4 /mnt/trailer2.mp4 /mnt/trailer3.mp4 /tmp/nfs-provisioner/$$pv_name/videos
+	docker exec $(CLUSTER)-worker sh -c "rm -rf /tmp/nfs-provisioner/$$pv_name/*"; \
+	docker cp apps/datasets/. $(CLUSTER)-worker:/mnt; \
+	docker exec $(CLUSTER)-worker sh -c "find /mnt -mindepth 1 -maxdepth 1 -exec mv -t '/tmp/nfs-provisioner/$$pv_name/' {} +"
 
 pv.dump:
 	mkdir -p temp/dump
 	pv_name=$$(kubectl get pv -o custom-columns=NAME:.metadata.name --no-headers); \
-	docker exec $(CLUSTER)-worker cp -r /tmp/nfs-provisioner/$$pv_name/videos /mnt/; \
-	docker cp $(CLUSTER)-worker:/mnt/videos temp/dump/
-	docker exec $(CLUSTER)-worker rm -rf /mnt/videos
+	docker exec $(CLUSTER)-worker sh -c "cp -r /tmp/nfs-provisioner/$$pv_name/* /mnt/"; \
+	docker cp $(CLUSTER)-worker:/mnt/. temp/dump/; \
+	docker exec $(CLUSTER)-worker sh -c "rm -rf /mnt/*"
 
 deploy.prios:
 	kubectl apply -f prios
 
 delete.jobs:
 	kubectl delete jobs -l jobgroup=video-transcoding
+	kubectl delete jobs -l jobgroup=hyperparam-tuning
 	kubectl delete jobs -l jobgroup=countdown
 	kubectl delete pods -l jobgroup=countdown
 	kubectl delete pods -l jobgroup=stress
@@ -105,3 +109,4 @@ exp.run:
 
 image.build:
 	docker build -t video-transcoding ./apps/video-transcoding
+	docker build -t hyperparam-tuning ./apps/hyperparam-tuning
