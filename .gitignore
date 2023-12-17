@@ -14,3 +14,4 @@ build/
 *.ts
 *.m3u8
 .DS_Store
+!apps/datasets/*/*.csv

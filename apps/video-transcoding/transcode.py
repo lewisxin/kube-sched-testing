@@ -1,7 +1,12 @@
 import ffmpeg
 import argparse
 import os
-import sys
+import logging
+import time
+
+# Set up logging configuration
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 supported_resolutions = ["640x360", "1280x720", "1920x1080"]
 bandwith = {
@@ -57,23 +62,30 @@ def main():
     total_duration = 0
     try:
         total_duration = get_total_duration(args.input_file)
+        logger.info(f"Get total duration of file {args.input_file}: {total_duration}")
     except Exception as e:
-        print(f'failed to get total duration of the pod')
-        print('stderr:', e.stderr.decode('utf8'))
+        logger.error(f'failed to get total duration of the pod')
+        logger.error('stderr:', e.stderr.decode('utf8'))
         raise e
 
     try:
+        logger.info(f"Transcoding file {args.input_file}")
         transcode(args.input_file, args.output_directory, total_duration, supported_resolutions[int(args.resolution_index)])
     except Exception as e:
-        print(f'failed to transcode the video')
+        logger.error(f'failed to transcode the video')
         raise e
     
     try:    
         generate_master_playlist(args.output_directory, supported_resolutions)
+        logger.info(f"Generating master playlist and saving to directory: {args.output_directory}")
     except Exception as e:
-        print(f'failed to create master playlist')
+        logger.error(f'failed to create master playlist')
         raise e
+    
    
-
 if __name__ == "__main__":
+    start_time = time.time()
     main()
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    logger.info(f"\nTotal Elapsed Time: {elapsed_time} seconds")

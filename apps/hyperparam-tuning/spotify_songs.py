@@ -9,6 +9,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor
 from sklearn.metrics import mean_absolute_error
 from concurrent.futures import ThreadPoolExecutor
+import logging
+
+# Set up logging configuration
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 models_to_search = [
     GradientBoostingRegressor(),
@@ -23,6 +28,8 @@ def read_hyperparameters(file_path):
 
 
 def train_model(model, X_train, y_train, hyperparams_for_model, X_test, y_test):
+    # Create a new instance of the model
+    model = model.__class__(**model.get_params())
     model.set_params(**hyperparams_for_model)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
@@ -33,31 +40,20 @@ def train_model(model, X_train, y_train, hyperparams_for_model, X_test, y_test):
 
 def train_and_evaluate_model(X_train, X_test, y_train, y_test, hyperparams):
     best_model_info = {'model': None, 'params': None, 'mae': float('inf')}
-    start_time = time.time()
-    with ThreadPoolExecutor(max_workers=len(models_to_search)) as executor:
-        futures = []
-        for model in models_to_search:
-            valid_params = model.get_params().keys()
-            hyperparams_for_model = {
-                key: value for key, value in hyperparams.items() if key in valid_params}
-            futures.append(executor.submit(
-                train_model, model, X_train, y_train, hyperparams_for_model, X_test, y_test))
+    for model in models_to_search:
+        valid_params = model.get_params().keys()
+        hyperparams_for_model = {
+            key: value for key, value in hyperparams.items() if key in valid_params}
+        model, params, mae = train_model(
+            model, X_train, y_train, hyperparams_for_model, X_test, y_test)
 
-        for future in futures:
-            model, params, mae = future.result()
+        # Update the best_model_info if the current model has lower MAE
+        if mae < best_model_info['mae']:
+            best_model_info['model'] = model
+            best_model_info['params'] = params
+            best_model_info['mae'] = mae
 
-            # Update the best_model_info if the current model has lower MAE
-            if mae < best_model_info['mae']:
-                best_model_info['model'] = model
-                best_model_info['params'] = params
-                best_model_info['mae'] = mae
-
-    print(f"Best Model: {best_model_info['model']}")
-    print(f"Best Parameters: {best_model_info['params']}")
-    print(f"Lowest Mean Absolute Error: {best_model_info['mae']}")
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"\nTotal Elapsed Time: {elapsed_time} seconds")
+    return best_model_info
 
 
 if __name__ == "__main__":
@@ -83,22 +79,49 @@ if __name__ == "__main__":
     job_id = int(os.getenv('JOB_ID', 0))
     batch_size = int(os.getenv('BATCH_SIZE', 20))
 
-    print(f"Processing job {job_id} with batch size {batch_size}")
+    logger.info(f"Processing job {job_id} with batch size {batch_size}")
     # Load hyperparameters from YAML file
     hyperparams_list = read_hyperparameters(
         f'{dataset_folder}/hyperparameters.yml')
 
     if job_id >= len(hyperparams_list):
-        print(
+        logger.info(
             f"Invalid JOB_ID: {job_id}. JOB_ID should be between 0 and {len(hyperparams_list) - 1}.")
         sys.exit(1)
 
     start_index = job_id
     end_index = len(hyperparams_list)
     step_size = batch_size
-    for idx in range(start_index, end_index, step_size):
-        hyperparams = hyperparams_list[idx]
-        print(
-            f"\nProcessing Hyperparameter Set {idx + 1}/{len(hyperparams_list)}")
-        train_and_evaluate_model(
-            X_train_scaled, X_test_scaled, y_train, y_test, hyperparams)
+
+    best_model_info = {'model': None, 'params': None, 'mae': float('inf')}
+
+    start_time = time.time()
+    # Use thread pool for parallel processing
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = []
+        for idx in range(start_index, end_index, step_size):
+            hyperparams = hyperparams_list[idx]
+            logger.info(
+                f"Processing Hyperparameter Set {idx + 1}/{len(hyperparams_list)}")
+            futures.append(executor.submit(
+                train_and_evaluate_model,
+                X_train_scaled,
+                X_test_scaled,
+                y_train,
+                y_test,
+                hyperparams
+            ))
+
+        # Wait for all tasks to complete
+        for future in futures:
+            result = future.result()
+            # Compare with inter-model best
+            if result['mae'] < best_model_info['mae']:
+                best_model_info = result
+
+    logger.info(f"Best Model: {best_model_info['model']}")
+    logger.info(f"Best Parameters: {best_model_info['params']}")
+    logger.info(f"Lowest Mean Absolute Error: {best_model_info['mae']}")
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    logger.info(f"Total Elapsed Time: {elapsed_time} seconds")
