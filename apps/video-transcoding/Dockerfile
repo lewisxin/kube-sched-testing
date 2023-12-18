@@ -14,11 +14,11 @@ COPY --from=ffmpeg-installer /usr/lib/*-linux-gnu/* /usr/lib/
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container
-COPY . /app
+COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
 
 # Run transcode.py when the container launches
 CMD ["python", "transcode.py", "./data/input.mp4", "./transcoded/", "0"]
