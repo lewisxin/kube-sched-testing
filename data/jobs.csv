@@ -1,4 +1,5 @@
-id,arrival_time,execution_time,ddl,priority,filename,ext
-01,0,180,200,,trailer1,mp4
-02,5,150,180,,trailer2,mp4
-03,10,80,170,,trailer3,mp4
+id,arrival_time,execution_time,ddl,name,meta1,meta2,meta3
+01,0,180,200,transcoding,trailer1,mp4,
+02,5,150,180,transcoding,trailer2,mp4,
+03,10,80,170,transcoding,trailer3,mp4,
+04,15,300,350,hyperparam,spotify-songs,9,spotify_songs

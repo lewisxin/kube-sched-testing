@@ -1,44 +1,43 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # name: spotify-songs-params-sweep-<% .InputFile %>
-  name: spotify-songs-params-sweep
+  name: <% .Meta1 %>-params-sweep
   labels:
     jobgroup: hyperparam-tuning
 spec:
-  completions: 9
-  parallelism: 9
+  completions: <% .Meta2 %>
+  parallelism: <% .Meta2 %>
   completionMode: Indexed
   template:
-    # metadata:
-      # annotations:
-        # rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>s
-        # rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>s
+    metadata:
+      annotations:
+        rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>s
+        rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>s
     spec:
       restartPolicy: Never
       containers:
-        - name: spotify-songs-params-sweep
+        - name: <% .Meta1 %>-params-sweep
           image: hyperparam-tuning:latest
           imagePullPolicy: Never
           resources:
             requests:
-              cpu: 3
+              cpu: 5
           env:
             - name: DATA_FOLDER
-              value: /mnt/spotify-songs
+              value: /mnt/<% .Meta1 %>
             - name: JOB_ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
             - name: BATCH_SIZE
-              value: "9"
+              value: "<% .Meta2 %>"
           command:
             - python
-            - spotify_songs.py
+            - <% .Meta3 %>.py
           volumeMounts:
-            - name: spotify-songs
+            - name: <% .Meta1 %>
               mountPath: /mnt
       volumes:
-        - name: spotify-songs
+        - name: <% .Meta1 %>
           persistentVolumeClaim:
             claimName: nfs

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: video-transcoding-<% .InputFile %>
+  name: video-transcoding-<% .Meta1 %>
   labels:
     jobgroup: video-transcoding
 spec:
@@ -25,8 +25,8 @@ spec:
           command:
             - python
             - transcode.py
-            - /mnt/videos/<% .InputFile %>.<% .InputFileExt %> # input file path
-            - /mnt/videos/<% .InputFile %>/transcoded # output file path
+            - /mnt/videos/<% .Meta1 %>.<% .Meta2 %> # input file path
+            - /mnt/videos/<% .Meta1 %>/transcoded # output file path
             - $(JOB_COMPLETION_INDEX)
           volumeMounts:
             - name: videos

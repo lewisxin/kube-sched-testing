@@ -105,7 +105,7 @@ podlistener.up:
 
 exp.run:
 	go build -o ./build/exp ./src/experiment
-	./build/exp -t templates/${FILE} -d data/jobs.csv
+	./build/exp -d data/jobs.csv
 
 image.build:
 	docker build -t video-transcoding ./apps/video-transcoding

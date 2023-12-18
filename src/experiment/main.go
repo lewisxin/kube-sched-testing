@@ -23,21 +23,27 @@ const (
 )
 
 var (
-	templateFile *string
-	dataFile     *string
+	dataFile *string
 )
 
 func validateFlags() {
-	if strings.Trim(*templateFile, " ") == "" {
-		klog.Fatal("template YAML file is required, use flag -t to pass it as arg")
-	}
 	if strings.Trim(*dataFile, " ") == "" {
 		klog.Fatal("data CSV file is required, use flag -d to pass it as arg")
 		klog.Fatal("create a CSV file with the headers: id,arrival_time,execution_time,ddl,priority")
 	}
 }
+
+func getTemplateFile(templateName string) string {
+	fileName := ""
+	switch templateName {
+	case "transcoding":
+		fileName = "transcode-video-tmpl"
+	case "hyperparam":
+		fileName = "hyperparam-tuning"
+	}
+	return fmt.Sprintf("templates/%s.yaml", fileName)
+}
 func main() {
-	templateFile = flag.String("t", "", "template file for the deployment")
 	dataFile = flag.String("d", "", "data file for the template")
 	flag.Parse()
 	validateFlags()
@@ -76,12 +82,13 @@ func main() {
 			ID:            row[0],
 			ExecutionTime: row[2],
 			DDL:           row[3],
-			Priority:      row[4],
-			InputFile:     row[5],
-			InputFileExt:  row[6],
+			Meta1:         row[5],
+			Meta2:         row[6],
+			Meta3:         row[7],
 		}
+		templateFile := getTemplateFile(row[4])
 		outputFile := filepath.Join(outputPath, fmt.Sprintf("job-%s.yaml", data.ID))
-		if err := parser.ParseYAML(*templateFile, data, outputFile); err != nil {
+		if err := parser.ParseYAML(templateFile, data, outputFile); err != nil {
 			wg.Done()
 			klog.Fatalf("failed to parse yaml for job %d: %s", i, err)
 		}
