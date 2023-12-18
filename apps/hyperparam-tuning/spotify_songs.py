@@ -11,9 +11,20 @@ from sklearn.metrics import mean_absolute_error
 from concurrent.futures import ThreadPoolExecutor
 import logging
 
+# Get JOB_ID and BATCH_SIZE from environment variables
+job_id = int(os.getenv('JOB_ID', 0))
+batch_size = int(os.getenv('BATCH_SIZE', 20))
+dataset_folder = os.getenv('DATA_FOLDER', '/mnt/datasets')
+
 # Set up logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Add a FileHandler to log to a file
+log_file_path = os.path.join(dataset_folder, f'output_{job_id}_{batch_size}.log')
+file_handler = logging.FileHandler(log_file_path)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger.addHandler(file_handler)
 
 models_to_search = [
     GradientBoostingRegressor(),
@@ -57,9 +68,9 @@ def train_and_evaluate_model(X_train, X_test, y_train, y_test, hyperparams):
 
 
 if __name__ == "__main__":
+    logger.info(f"Processing job {job_id} with batch size {batch_size}")
     # Load the dataset for training
     # Replace with the actual file path
-    dataset_folder = os.getenv('DATA_FOLDER', '/mnt/datasets')
     file_path_data = f'{dataset_folder}/data.csv'
     data = pd.read_csv(file_path_data)
 
@@ -74,12 +85,7 @@ if __name__ == "__main__":
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-
-    # Get JOB_ID and BATCH_SIZE from environment variables
-    job_id = int(os.getenv('JOB_ID', 0))
-    batch_size = int(os.getenv('BATCH_SIZE', 20))
-
-    logger.info(f"Processing job {job_id} with batch size {batch_size}")
+    
     # Load hyperparameters from YAML file
     hyperparams_list = read_hyperparameters(
         f'{dataset_folder}/hyperparameters.yml')
