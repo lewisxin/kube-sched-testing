@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor
+from sklearn.ensemble import GradientBoostingRegressor, ExtraTreesRegressor
 from sklearn.metrics import mean_absolute_error
 from concurrent.futures import ThreadPoolExecutor
 import logging
@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Add a FileHandler to log to a file
-log_file_path = os.path.join(dataset_folder, f'output_{job_id}_{batch_size}.log')
+log_file_path = os.path.join(dataset_folder, f'spotify_song_hyperparameter_tuning_{job_id}_{batch_size}.log')
 file_handler = logging.FileHandler(log_file_path)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(file_handler)
@@ -70,7 +70,6 @@ def train_and_evaluate_model(X_train, X_test, y_train, y_test, hyperparams):
 if __name__ == "__main__":
     logger.info(f"Processing job {job_id} with batch size {batch_size}")
     # Load the dataset for training
-    # Replace with the actual file path
     file_path_data = f'{dataset_folder}/data.csv'
     data = pd.read_csv(file_path_data)
 
