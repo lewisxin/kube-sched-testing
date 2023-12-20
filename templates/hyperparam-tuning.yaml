@@ -11,8 +11,8 @@ spec:
   template:
     metadata:
       annotations:
-        rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>s
-        rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>s
+        rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>
+        rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>
     spec:
       restartPolicy: Never
       containers:
@@ -20,6 +20,8 @@ spec:
           image: hyperparam-tuning:latest
           imagePullPolicy: Never
           resources:
+            limits:
+              cpu: 5
             requests:
               cpu: 5
           env:
