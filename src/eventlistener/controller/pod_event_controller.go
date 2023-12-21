@@ -90,6 +90,7 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent podevent.E
 	event, ok := c.podEvents[podName]
 	if !ok || event == nil {
 		event = &podevent.Event{
+			ID:       newEvent.ID,
 			Start:    newEvent.Start,
 			End:      newEvent.End,
 			NodeName: newEvent.NodeName,
@@ -107,12 +108,12 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent podevent.E
 		event.Start = newEvent.Start
 		if !event.Created.IsZero() {
 			if event.Start.Before(event.Deadline) {
-				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue", event.NodeName})
+				c.csvWriter.Append([]string{event.ID, podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue", event.NodeName})
 			} else if event.Created.Before(event.Deadline) {
-				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue", event.NodeName})
-				c.csvWriter.Append([]string{podName, event.Deadline.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
+				c.csvWriter.Append([]string{event.ID, podName, event.Created.Format(TimeFormat), event.Deadline.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue", event.NodeName})
+				c.csvWriter.Append([]string{event.ID, podName, event.Deadline.Format(TimeFormat), event.Start.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
 			} else {
-				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
+				c.csvWriter.Append([]string{event.ID, podName, event.Created.Format(TimeFormat), event.Start.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
 			}
 			var t time.Time
 			event.Created = t
@@ -123,23 +124,23 @@ func (c *PodLoggingController) writePodEvent(podName string, newEvent podevent.E
 		event.End = newEvent.End
 		// write event to csv and reset start and end
 		if event.End.Before(event.Deadline) {
-			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), "Running", event.NodeName})
+			c.csvWriter.Append([]string{event.ID, podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), event.Deadline.Format(TimeFormat), "Running", event.NodeName})
 		} else if event.Start.Before(event.Deadline) {
-			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.Deadline.Format(TimeFormat), "Running"})
-			c.csvWriter.Append([]string{podName, event.Deadline.Format(TimeFormat), event.End.Format(TimeFormat), "Running (Overdue)", event.NodeName})
+			c.csvWriter.Append([]string{event.ID, podName, event.Start.Format(TimeFormat), event.Deadline.Format(TimeFormat), event.Deadline.Format(TimeFormat), "Running", event.NodeName})
+			c.csvWriter.Append([]string{event.ID, podName, event.Deadline.Format(TimeFormat), event.End.Format(TimeFormat), event.Deadline.Format(TimeFormat), "Running (Overdue)", event.NodeName})
 		} else {
-			c.csvWriter.Append([]string{podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), "Running (Overdue)", event.NodeName})
+			c.csvWriter.Append([]string{event.ID, podName, event.Start.Format(TimeFormat), event.End.Format(TimeFormat), event.Deadline.Format(TimeFormat), "Running (Overdue)", event.NodeName})
 		}
 	case podevent.TypeFailed:
 		event.End = newEvent.End
 		if !event.Created.IsZero() {
 			if event.End.Before(event.Deadline) {
-				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue", event.NodeName})
+				c.csvWriter.Append([]string{event.ID, podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue", event.NodeName})
 			} else if event.Created.Before(event.Deadline) {
-				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue", event.NodeName})
-				c.csvWriter.Append([]string{podName, event.Deadline.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
+				c.csvWriter.Append([]string{event.ID, podName, event.Created.Format(TimeFormat), event.Deadline.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue", event.NodeName})
+				c.csvWriter.Append([]string{event.ID, podName, event.Deadline.Format(TimeFormat), event.End.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
 			} else {
-				c.csvWriter.Append([]string{podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
+				c.csvWriter.Append([]string{event.ID, podName, event.Created.Format(TimeFormat), event.End.Format(TimeFormat), event.Deadline.Format(TimeFormat), "In Queue (Overdue)", event.NodeName})
 			}
 			var t time.Time
 			event.Created = t
@@ -153,11 +154,12 @@ func (c *PodLoggingController) podAdd(obj interface{}) {
 	if pod.Namespace == NamespaceSystem || pod.Namespace == NamespaceLocalPath || strings.HasPrefix(pod.Name, "nfs") {
 		return
 	}
+	id := pod.Labels["id"]
 	if pod.Status.Phase == v1.PodRunning {
-		c.writePodEvent(pod.Name, podevent.Event{EventType: podevent.TypeRunning, Start: time.Now()})
+		c.writePodEvent(pod.Name, podevent.Event{ID: id, EventType: podevent.TypeRunning, Start: time.Now(), NodeName: pod.Spec.NodeName})
 		klog.Infof("POD RUNNING: %s/%s", pod.Namespace, pod.Name)
 	} else {
-		c.writePodEvent(pod.Name, podevent.Event{EventType: podevent.TypeCreated, Deadline: getPodDDL(pod), Created: pod.CreationTimestamp.Time})
+		c.writePodEvent(pod.Name, podevent.Event{ID: id, EventType: podevent.TypeCreated, Deadline: getPodDDL(pod), Created: pod.CreationTimestamp.Time, NodeName: pod.Spec.NodeName})
 		klog.Infof("POD CREATED: %s/%s", pod.Namespace, pod.Name)
 	}
 }
@@ -175,22 +177,23 @@ func (c *PodLoggingController) podUpdate(old, new interface{}) {
 	}
 	oldPhase := oldPod.Status.Phase
 	newPhase := newPod.Status.Phase
+	id := newPod.Labels["id"]
 	phasePause := v1.PodPhase("Paused")
 	switch {
 	case oldPhase == v1.PodPending && newPhase == v1.PodRunning:
-		c.writePodEvent(newPod.Name, podevent.Event{EventType: podevent.TypeRunning, Start: time.Now()})
+		c.writePodEvent(newPod.Name, podevent.Event{ID: id, EventType: podevent.TypeRunning, Start: time.Now(), NodeName: newPod.Spec.NodeName})
 		klog.Infof("POD RUNNING: %s/%s", newPod.Namespace, newPod.Name)
 	case oldPhase == v1.PodRunning && newPhase == phasePause:
-		c.writePodEvent(newPod.Name, podevent.Event{EventType: podevent.TypePaused, End: time.Now()})
+		c.writePodEvent(newPod.Name, podevent.Event{ID: id, EventType: podevent.TypePaused, End: time.Now(), NodeName: newPod.Spec.NodeName})
 		klog.Infof("POD PAUSED: %s/%s", newPod.Namespace, newPod.Name)
 	case oldPhase == phasePause && newPhase == v1.PodRunning:
-		c.writePodEvent(newPod.Name, podevent.Event{EventType: podevent.TypeResumed, Start: time.Now()})
+		c.writePodEvent(newPod.Name, podevent.Event{ID: id, EventType: podevent.TypeResumed, Start: time.Now(), NodeName: newPod.Spec.NodeName})
 		klog.Infof("POD RESUMED: %s/%s", newPod.Namespace, newPod.Name)
 	case (oldPhase == v1.PodRunning || oldPhase == phasePause) && newPhase == v1.PodSucceeded:
-		c.writePodEvent(newPod.Name, podevent.Event{EventType: podevent.TypeFinished, End: time.Now(), NodeName: newPod.Spec.NodeName})
+		c.writePodEvent(newPod.Name, podevent.Event{ID: id, EventType: podevent.TypeFinished, End: time.Now(), NodeName: newPod.Spec.NodeName})
 		klog.Infof("POD FINISHED: %s/%s", newPod.Namespace, newPod.Name)
 	case (oldPhase == v1.PodRunning || oldPhase == phasePause || oldPhase == v1.PodPending) && newPhase == v1.PodFailed:
-		c.writePodEvent(newPod.Name, podevent.Event{EventType: podevent.TypeFailed, End: time.Now(), NodeName: newPod.Spec.NodeName})
+		c.writePodEvent(newPod.Name, podevent.Event{ID: id, EventType: podevent.TypeFailed, End: time.Now(), NodeName: newPod.Spec.NodeName})
 		klog.Infof("POD FAILED: %s/%s", newPod.Namespace, newPod.Name)
 	}
 }

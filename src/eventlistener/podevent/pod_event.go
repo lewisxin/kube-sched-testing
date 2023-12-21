@@ -3,6 +3,7 @@ package podevent
 import "time"
 
 type Event struct {
+	ID        string
 	EventType EventType
 	Start     time.Time
 	End       time.Time

@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	csvHeaders = []string{"Job", "Start", "End", "Status", "Node"}
+	csvHeaders = []string{"ID", "Job", "Start", "End", "Deadline", "Status", "Node"}
 )
 
 type podEventCSVWriter struct {

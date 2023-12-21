@@ -10,6 +10,8 @@ spec:
   completionMode: Indexed
   template:
     metadata:
+      labels:
+        id: <% .ID %>
       annotations:
         rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>
         rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>

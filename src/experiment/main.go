@@ -40,6 +40,8 @@ func getTemplateFile(templateName string) string {
 		fileName = "transcode-video-tmpl"
 	case "hyperparam":
 		fileName = "hyperparam-tuning"
+	case "countdown":
+		fileName = "countdown-ddl-tmpl"
 	}
 	return fmt.Sprintf("templates/%s.yaml", fileName)
 }

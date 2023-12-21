@@ -10,6 +10,8 @@ spec:
   completionMode: Indexed
   template:
     metadata:
+      labels:
+        id: <% .ID %>
       annotations:
         rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>
         rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>
@@ -20,8 +22,10 @@ spec:
           image: video-transcoding:latest
           imagePullPolicy: Never
           resources:
+            limits:
+              cpu: 8
             requests:
-              cpu: 4
+              cpu: 8
           command:
             - python
             - transcode.py

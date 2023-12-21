@@ -5,25 +5,29 @@ metadata:
   labels:
     jobgroup: countdown
 spec:
+  completions: 2
+  parallelism: 2
+  completionMode: Indexed
   template:
     metadata:
       annotations:
-        rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>s
-        rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>s
+        rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>
+        rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>
       name: countdown
       labels:
+        id: "<% .ID %>"
         jobgroup: countdown
     spec:
       containers:
         - name: counter
           resources:
             requests:
-              cpu: 4
+              cpu: 2
             limits:
-              cpu: 4
+              cpu: 2
           image: centos:7
           command:
             - "bin/bash"
             - "-c"
-            - "for i in {<% .ExecutionTime %>..1}; do echo $i; sleep 1; done"
+            - "for i in {<% .Meta1 %>..1}; do echo $i; sleep 1; done"
       restartPolicy: Never
