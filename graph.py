@@ -7,6 +7,26 @@ from datetime import datetime
 import plotly.graph_objects as go
 
 
+def convert_to_relative(df):
+    df['Start'] = pd.to_datetime(df['Start'])
+    df['End'] = pd.to_datetime(df['End'])
+    df['Deadline'] = pd.to_datetime(df['Deadline'])
+    start_min = df["Start"].min()
+    df["Start"] = (df["Start"] - start_min).dt.total_seconds()
+    df["End"] = (df["End"] - start_min).dt.total_seconds()
+    df["Deadline"] = (df["Deadline"] - start_min).dt.total_seconds()
+    df["delta"] = df["End"] - df["Start"]
+    return df
+
+
+def update_fig_xdata(fig, df):
+    for data in fig.data:
+        status = data.name
+        subset_df = df[df["Status"] == status]
+        if not subset_df.empty:
+            data.x = subset_df["delta"].tolist()
+
+
 def insert_paused_events(df):
     paused_rows = []
     # Iterate through each job group
@@ -35,23 +55,25 @@ def insert_paused_events(df):
 
     # Concatenate with the main DataFrame
     df = pd.concat([df, paused_df], ignore_index=True)
-    df = df.sort_values(by=["Node", "Start", "Job"])
+    df = df.sort_values(by=["Node", "Job", "Start"])
     return df
+
 
 def shorten_node_name(node_name):
     # Extract the last numeric part from the node name
     node_number = "".join(filter(str.isdigit, node_name.split('-')[-1])) or "1"
     return f"<b>node-{node_number}</b>"
 
+
 def plot(inputfile):
     name = inputfile.removesuffix(".csv")
     current_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
-    df = pd.read_csv(filepath_or_buffer=inputfile, header=0,
-                     delimiter=",").sort_values(by=["Job", "Status"])
+    df = pd.read_csv(filepath_or_buffer=inputfile, header=0, delimiter=",")
 
     # Insert paused events
     df = insert_paused_events(df)
+    df = convert_to_relative(df)
     # Shorten node names
     df["Node"] = df["Node"].apply(shorten_node_name)
 
@@ -65,7 +87,8 @@ def plot(inputfile):
     }
 
     # Create a list of the same length as the DataFrame for the 'text' parameter
-    text_values = df.apply(lambda row: row["Node"] if row["End"] == df[df["Job"] == row["Job"]]["End"].max() else None, axis=1)
+    text_values = df.apply(lambda row: row["Node"] if row["End"] ==
+                           df[df["Job"] == row["Job"]]["End"].max() else None, axis=1)
     fig = px.timeline(df, x_start="Start", x_end="End", y="Job", color="Status",
                       color_discrete_map=colors, text=text_values)
     fig.update_traces(textposition='outside')
@@ -89,6 +112,8 @@ def plot(inputfile):
     fig.update_layout(
         title_text=f"Plot based on {name} (generated at {current_time})", title_x=0.5)
     fig.update_yaxes(autorange="reversed")
+    fig.update_xaxes(type="linear", title_text="Relative Time (seconds)")
+    update_fig_xdata(fig, df)
     fig.show()
 
     # Create the "plots" folder if it doesn't exist
@@ -97,7 +122,7 @@ def plot(inputfile):
         os.makedirs(folder)
 
     output = f'{folder}/{current_time}_gantt_{name}.png'
-    fig.write_image(output, width=1200, height=800, scale=2)
+    fig.write_image(output, width=1440, height=800, scale=2)
 
 
 def main(argv):
