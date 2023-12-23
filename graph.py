@@ -1,5 +1,6 @@
 import plotly.express as px
 import pandas as pd
+import numpy as np
 import os
 import sys
 import getopt
@@ -7,7 +8,7 @@ from datetime import datetime
 import plotly.graph_objects as go
 
 
-def convert_to_relative(df):
+def convert_to_relative(df: pd.DataFrame) -> pd.DataFrame:
     df['Start'] = pd.to_datetime(df['Start'])
     df['End'] = pd.to_datetime(df['End'])
     df['Deadline'] = pd.to_datetime(df['Deadline'])
@@ -19,7 +20,7 @@ def convert_to_relative(df):
     return df
 
 
-def update_fig_xdata(fig, df):
+def update_fig_xdata(fig: go.Figure, df: pd.DataFrame):
     for data in fig.data:
         status = data.name
         subset_df = df[df["Status"] == status]
@@ -27,7 +28,7 @@ def update_fig_xdata(fig, df):
             data.x = subset_df["delta"].tolist()
 
 
-def insert_paused_events(df):
+def insert_paused_events(df: pd.DataFrame):
     paused_rows = []
     # Iterate through each job group
     for _, group in df.groupby("Job"):
@@ -59,21 +60,21 @@ def insert_paused_events(df):
     return df
 
 
-def shorten_node_name(node_name):
+def shorten_node_name(node_name: str) -> str:
     # Extract the last numeric part from the node name
     node_number = "".join(filter(str.isdigit, node_name.split('-')[-1])) or "1"
     return f"<b>node-{node_number}</b>"
 
 
-def plot(inputfile):
-    name = inputfile.removesuffix(".csv")
-    current_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-
+def read_data(inputfile: str) -> pd.DataFrame:
     df = pd.read_csv(filepath_or_buffer=inputfile, header=0, delimiter=",")
-
-    # Insert paused events
     df = insert_paused_events(df)
     df = convert_to_relative(df)
+    return df
+
+
+def plot(name: str, df: pd.DataFrame):
+    current_time = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     # Shorten node names
     df["Node"] = df["Node"].apply(shorten_node_name)
 
@@ -125,6 +126,29 @@ def plot(inputfile):
     fig.write_image(output, width=1440, height=800, scale=2)
 
 
+def report_metrics(df: pd.DataFrame, precision=3):
+    job_df = df.groupby('ID').agg(
+        Name=('Job', lambda x: x.iloc[0].rsplit('-', 1)[0]),  # Extracting Job name without index
+        Job_Start=('Start', 'min'),
+        Job_End=('End', 'max'),
+        Deadline=('Deadline', 'min')
+    )
+
+    job_df['Resp_Time'] = job_df['Job_End'] - job_df['Job_Start']
+    job_df['Lateness'] = job_df['Job_End'] - job_df['Deadline']
+    job_df['Tardiness'] = job_df['Lateness'].clip(lower=0)
+    job_df['DDL_Missed'] = (job_df['Lateness'] > 0).astype(int)
+
+    print(job_df)
+    print("Total Deadline Misses:", job_df['DDL_Missed'].sum())
+    print(f"Max Resp Time: {round(job_df['Resp_Time'].max(), precision)}s")
+    print(f"Max Lateness: {round(job_df['Lateness'].max(), precision)}s")
+    print(f"Max Tardiness: {round(job_df['Tardiness'].max(), precision)}s")
+    print(f"Avg Resp Time: {round(job_df['Resp_Time'].mean(), precision)}s")
+    print(f"Avg Tardiness: {round(job_df['Tardiness'].mean(), precision)}s")
+    print(f"Avg Lateness: {round(job_df['Lateness'].mean(), precision)}s")
+
+
 def main(argv):
     inputfile = ''
     opts, _ = getopt.getopt(argv, "hi:o:", ["ifile="])
@@ -135,7 +159,9 @@ def main(argv):
         elif opt in ("-i", "--ifile"):
             inputfile = arg
     print("plotting from data file:", inputfile)
-    plot(inputfile)
+    df = read_data(inputfile)
+    plot(inputfile.removesuffix(".csv"), df)
+    report_metrics(df)
 
 
 if __name__ == "__main__":
