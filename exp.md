@@ -148,20 +148,37 @@ video-transcoding-video4      3/3           6m49s      9m9s
 
 
 ### Run individual jobs one by one to benchmark the execution time
+#### Job Details
+```csv
+id,arrival_time,execution_time,ddl,cpu_limit,template,meta1,meta2,meta3
+01,0,2m26s,3m,2,transcoding,game1,webm,
+02,0,2m48s,3m,7,transcoding,trailer1,mp4,
+03,0,3m31s,4m,10,transcoding,video1,mp4,
+04,10,3m,4m,3,transcoding,game2,webm,
+05,12,1m37s,3m,7,transcoding,trailer2,mp4,
+06,15,4m13s,4m30s,4,hyperparam,spotify-songs,9,spotify_songs
+07,15,3m50s,4m40s,7,hyperparam,car-evaluation,8,car_evaluation
+08,15,1m16s,2m,5,transcoding,video2,mp4,
+09,16,2m27s,4m,7,transcoding,trailer3,mp4,
+10,17,3m31s,5m,3,transcoding,game3,webm,
+11,20,48s,2m,5,transcoding,video3,mp4,
+12,23,32s,2m,5,transcoding,video4,mp4,
+```
+#### Benchmark
 ```bash
 NAME                          COMPLETIONS   DURATION   AGE
-car-evaluation-params-sweep   8/8           5m15s      5m18s
-spotify-songs-params-sweep    9/9           4m3s       10m
-video-transcoding-game1       3/3           29s        19m
-video-transcoding-game2       3/3           67s        22m
-video-transcoding-game3       3/3           72s        14m
-video-transcoding-trailer1    3/3           2m1s       18m
-video-transcoding-trailer2    3/3           90s        20m
-video-transcoding-trailer3    3/3           2m12s      16m
-video-transcoding-video1      3/3           4m34s      18m
-video-transcoding-video2      3/3           40s        16m
-video-transcoding-video3      3/3           31s        13m
-video-transcoding-video4      3/3           25s        12m
+car-evaluation-params-sweep   8/8           3m48s      29m
+spotify-songs-params-sweep    9/9           4m8s       35m
+video-transcoding-game1       3/3           2m26s      48m
+video-transcoding-game2       3/3           3m         44m
+video-transcoding-game3       3/3           3m31s      5m52s
+video-transcoding-trailer1    3/3           2m48s      50m
+video-transcoding-trailer2    3/3           97s        39m
+video-transcoding-trailer3    3/3           2m27s      5m54s
+video-transcoding-video1      3/3           3m31s      40m
+video-transcoding-video2      3/3           76s        23m
+video-transcoding-video3      3/3           48s        72s
+video-transcoding-video4      3/3           32s        70s
 ```
 
 ## Default Scheduler

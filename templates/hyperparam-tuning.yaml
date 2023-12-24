@@ -23,9 +23,9 @@ spec:
           imagePullPolicy: Never
           resources:
             limits:
-              cpu: <% .CPU %>
+              cpu: <% .CPULimit %>
             requests:
-              cpu: <% .CPU %>
+              cpu: 5
           env:
             - name: DATA_FOLDER
               value: /mnt/<% .Meta1 %>

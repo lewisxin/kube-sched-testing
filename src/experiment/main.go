@@ -84,7 +84,7 @@ func main() {
 			ID:            row[0],
 			ExecutionTime: row[2],
 			DDL:           row[3],
-			CPU:           row[4],
+			CPULimit:      row[4],
 			Meta1:         row[6],
 			Meta2:         row[7],
 			Meta3:         row[8],
