@@ -9,7 +9,6 @@ import (
 
 type Data struct {
 	DDL           string
-	Priority      string
 	ExecutionTime string
 	ID            string
 	CPULimit      string

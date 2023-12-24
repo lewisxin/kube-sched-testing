@@ -7,7 +7,7 @@ app
 files/
 *.log
 *.csv
-!data/*
+!data/jobs.csv
 build/
 *.mov
 *.mp4
