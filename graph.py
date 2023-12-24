@@ -102,7 +102,7 @@ def plot(name: str, df: pd.DataFrame):
             mode="markers",
             marker=dict(
                 color="darkblue",
-                size=15,
+                size=10,
                 symbol="x-thin",
                 line=dict(width=2, color='darkblue')
             ),
