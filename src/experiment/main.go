@@ -84,11 +84,12 @@ func main() {
 			ID:            row[0],
 			ExecutionTime: row[2],
 			DDL:           row[3],
-			Meta1:         row[5],
-			Meta2:         row[6],
-			Meta3:         row[7],
+			CPU:           row[4],
+			Meta1:         row[6],
+			Meta2:         row[7],
+			Meta3:         row[8],
 		}
-		templateFile := getTemplateFile(row[4])
+		templateFile := getTemplateFile(row[5])
 		outputFile := filepath.Join(outputPath, fmt.Sprintf("job-%s.yaml", data.ID))
 		if err := parser.ParseYAML(templateFile, data, outputFile); err != nil {
 			wg.Done()

@@ -11,7 +11,7 @@ spec:
   template:
     metadata:
       labels:
-        id: <% .ID %>
+        id: "<% .ID %>"
       annotations:
         rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>
         rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>
@@ -23,9 +23,9 @@ spec:
           imagePullPolicy: Never
           resources:
             limits:
-              cpu: 5
+              cpu: <% .CPU %>
             requests:
-              cpu: 5
+              cpu: <% .CPU %>
           env:
             - name: DATA_FOLDER
               value: /mnt/<% .Meta1 %>

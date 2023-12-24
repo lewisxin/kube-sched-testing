@@ -11,6 +11,7 @@ type Data struct {
 	DDL           string
 	ExecutionTime string
 	ID            string
+	CPU           string
 	Meta1         string
 	Meta2         string
 	Meta3         string
