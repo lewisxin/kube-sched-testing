@@ -17,6 +17,7 @@ spec:
         rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>
     spec:
       restartPolicy: Never
+      priorityClassName: <% .Priority %>
       containers:
         - name: <% .Meta1 %>-params-sweep
           image: hyperparam-tuning:latest

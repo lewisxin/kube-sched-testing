@@ -147,28 +147,28 @@ video-transcoding-video4      3/3           6m49s      9m9s
 ```
 
 
-### Run individual jobs one by one to benchmark the execution time
-#### Job Details
+
+## Job Details
 ```csv
 id,arrival_time,execution_time,ddl,cpu_limit,template,meta1,meta2,meta3
-01,0,2m26s,3m,2,transcoding,game1,webm,
-02,0,2m48s,3m,7,transcoding,trailer1,mp4,
-03,0,3m31s,4m,10,transcoding,video1,mp4,
-04,10,3m,4m,3,transcoding,game2,webm,
-05,12,1m37s,3m,7,transcoding,trailer2,mp4,
-06,15,4m13s,4m30s,4,hyperparam,spotify-songs,9,spotify_songs
-07,15,3m50s,4m40s,7,hyperparam,car-evaluation,8,car_evaluation
+01,0,5m36s,6m,4,hyperparam,spotify-songs,7,spotify_songs
+02,0,3m50s,6m,7,hyperparam,car-evaluation,8,car_evaluation
+03,5,2m26s,4m,3,transcoding,game1,webm,
+04,5,2m48s,4m,7,transcoding,trailer1,mp4,
+05,5,3m31s,4m,10,transcoding,video1,mp4,
+06,10,3m,4m,3,transcoding,game2,webm,
+07,12,1m37s,2m,7,transcoding,trailer2,mp4,
 08,15,1m16s,2m,5,transcoding,video2,mp4,
 09,16,2m27s,4m,7,transcoding,trailer3,mp4,
 10,17,3m31s,5m,3,transcoding,game3,webm,
 11,20,48s,2m,5,transcoding,video3,mp4,
 12,23,32s,2m,5,transcoding,video4,mp4,
 ```
-#### Benchmark
+### Benchmark Individual Jobs
 ```bash
 NAME                          COMPLETIONS   DURATION   AGE
 car-evaluation-params-sweep   8/8           3m48s      29m
-spotify-songs-params-sweep    9/9           4m8s       35m
+spotify-songs-params-sweep    7/7           5m36s      5m44s
 video-transcoding-game1       3/3           2m26s      48m
 video-transcoding-game2       3/3           3m         44m
 video-transcoding-game3       3/3           3m31s      5m52s
@@ -184,51 +184,123 @@ video-transcoding-video4      3/3           32s        70s
 ## Default Scheduler
 ```bash
 NAME                          COMPLETIONS   DURATION   AGE
-car-evaluation-params-sweep   8/8           5m20s      19m
-spotify-songs-params-sweep    9/9           9m8s       19m
-video-transcoding-game1       3/3           27s        19m
-video-transcoding-game2       3/3           7m36s      19m
-video-transcoding-game3       3/3           6m21s      19m
-video-transcoding-trailer1    3/3           93s        19m
-video-transcoding-trailer2    3/3           8m14s      19m
-video-transcoding-trailer3    3/3           7m9s       19m
-video-transcoding-video1      3/3           3m42s      19m
-video-transcoding-video2      3/3           7m49s      19m
-video-transcoding-video3      3/3           6m39s      19m
-video-transcoding-video4      3/3           6m50s      19m
+car-evaluation-params-sweep   8/8           4m39s      10m
+spotify-songs-params-sweep    7/7           5m27s      10m
+video-transcoding-game1       3/3           61s        10m
+video-transcoding-game2       3/3           4m42s      10m
+video-transcoding-game3       3/3           7m19s      10m
+video-transcoding-trailer1    3/3           4m24s      10m
+video-transcoding-trailer2    3/3           4m44s      10m
+video-transcoding-trailer3    3/3           6m4s       10m
+video-transcoding-video1      3/3           5m2s       10m
+video-transcoding-video2      3/3           4m26s      10m
+video-transcoding-video3      3/3           4m53s      10m
+video-transcoding-video4      3/3           4m47s      10m
+```
+### Metrics
+```log
+                           Name  Job_Start     Job_End  Deadline   Resp_Time    Lateness   Tardiness  DDL_Missed
+ID                                                                                                              
+1    spotify-songs-params-sweep        0.0  327.189983     360.0  327.189983  -32.810017    0.000000           0
+2   car-evaluation-params-sweep        0.0  279.065020     360.0  279.065020  -80.934980    0.000000           0
+3       video-transcoding-game1        5.0   66.268689     245.0   61.268689 -178.731311    0.000000           0
+4    video-transcoding-trailer1        5.0  268.990877     245.0  263.990877   23.990877   23.990877           1
+5      video-transcoding-video1        5.0  306.689358     245.0  301.689358   61.689358   61.689358           1
+6       video-transcoding-game2       10.0  292.066154     250.0  282.066154   42.066154   42.066154           1
+7    video-transcoding-trailer2       12.0  295.523108     132.0  283.523108  163.523108  163.523108           1
+8      video-transcoding-video2       15.0  280.992872     135.0  265.992872  145.992872  145.992872           1
+9    video-transcoding-trailer3       16.0  380.180673     256.0  364.180673  124.180673  124.180673           1
+10      video-transcoding-game3       17.0  455.900189     317.0  438.900189  138.900189  138.900189           1
+11     video-transcoding-video3       20.0  313.121406     140.0  293.121406  173.121406  173.121406           1
+12     video-transcoding-video4       23.0  310.089360     143.0  287.089360  167.089360  167.089360           1
+Total Deadline Misses: 9
+Max Resp Time: 438.9s
+Max Lateness: 173.121s
+Max Tardiness: 173.121s
+Avg Resp Time: 287.34s
+Avg Tardiness: 86.713s
+Avg Lateness: 62.34s
 ```
 
 ## LLF
 ```bash
 NAME                          COMPLETIONS   DURATION   AGE
-car-evaluation-params-sweep   8/8           11m        12m
-spotify-songs-params-sweep    9/9           8m54s      12m
-video-transcoding-game1       3/3           98s        12m
-video-transcoding-game2       3/3           87s        12m
-video-transcoding-game3       3/3           6m21s      11m
-video-transcoding-trailer1    3/3           4m50s      12m
-video-transcoding-trailer2    3/3           2m4s       12m
-video-transcoding-trailer3    3/3           4m12s      11m
-video-transcoding-video1      3/3           7m45s      12m
-video-transcoding-video2      3/3           77s        12m
-video-transcoding-video3      3/3           9m33s      11m
-video-transcoding-video4      3/3           2m18s      11m
+car-evaluation-params-sweep   8/8           6m36s      19m
+spotify-songs-params-sweep    7/7           7m18s      19m
+video-transcoding-game1       3/3           68s        19m
+video-transcoding-game2       3/3           2m13s      19m
+video-transcoding-game3       3/3           2m9s       19m
+video-transcoding-trailer1    3/3           2m31s      19m
+video-transcoding-trailer2    3/3           106s       19m
+video-transcoding-trailer3    3/3           2m18s      19m
+video-transcoding-video1      3/3           3m51s      19m
+video-transcoding-video2      3/3           56s        19m
+video-transcoding-video3      3/3           56s        19m
+video-transcoding-video4      3/3           38s        19m
+```
+### Metrics
+```log
+                           Name  Job_Start     Job_End  Deadline   Resp_Time    Lateness  Tardiness  DDL_Missed
+ID                                                                                                             
+1    spotify-songs-params-sweep        0.0  437.549339     360.0  437.549339   77.549339  77.549339           1
+2   car-evaluation-params-sweep        0.0  395.411142     360.0  395.411142   35.411142  35.411142           1
+3       video-transcoding-game1        5.0   72.351119     245.0   67.351119 -172.648881   0.000000           0
+4    video-transcoding-trailer1        4.0  154.776072     244.0  150.776072  -89.223928   0.000000           0
+5      video-transcoding-video1        4.0  235.211825     244.0  231.211825   -8.788175   0.000000           0
+6       video-transcoding-game2        9.0  141.877716     249.0  132.877716 -107.122284   0.000000           0
+7    video-transcoding-trailer2       11.0  116.692939     131.0  105.692939  -14.307061   0.000000           0
+8      video-transcoding-video2       14.0   69.697795     134.0   55.697795  -64.302205   0.000000           0
+9    video-transcoding-trailer3       15.0  152.817702     255.0  137.817702 -102.182298   0.000000           0
+10      video-transcoding-game3       16.0  144.950674     316.0  128.950674 -171.049326   0.000000           0
+11     video-transcoding-video3       19.0   74.577079     139.0   55.577079  -64.422921   0.000000           0
+12     video-transcoding-video4       22.0   59.671712     142.0   37.671712  -82.328288   0.000000           0
+Total Deadline Misses: 2
+Max Resp Time: 437.549s
+Max Lateness: 77.549s
+Max Tardiness: 77.549s
+Avg Resp Time: 161.382s
+Avg Tardiness: 9.413s
+Avg Lateness: -63.618s
 ```
 
 
-EDF
+## EDF
 ```bash
 NAME                          COMPLETIONS   DURATION   AGE
-car-evaluation-params-sweep   8/8           14m        14m
-spotify-songs-params-sweep    9/9           8m36s      14m
-video-transcoding-game1       3/3           35s        14m
-video-transcoding-game2       3/3           5m15s      14m
-video-transcoding-game3       3/3           113s       14m
-video-transcoding-trailer1    3/3           6m52s      14m
-video-transcoding-trailer2    3/3           3m23s      14m
-video-transcoding-trailer3    3/3           4m57s      14m
-video-transcoding-video1      3/3           7m45s      14m
-video-transcoding-video2      3/3           53s        14m
-video-transcoding-video3      3/3           2m5s       14m
-video-transcoding-video4      3/3           44s        14m
+car-evaluation-params-sweep   8/8           6m45s      8m13s
+spotify-songs-params-sweep    7/7           7m4s       8m13s
+video-transcoding-game1       3/3           57s        8m8s
+video-transcoding-game2       3/3           107s       8m3s
+video-transcoding-game3       3/3           2m24s      7m56s
+video-transcoding-trailer1    3/3           2m31s      8m8s
+video-transcoding-trailer2    3/3           110s       8m1s
+video-transcoding-trailer3    3/3           2m44s      7m57s
+video-transcoding-video1      3/3           4m28s      8m8s
+video-transcoding-video2      3/3           59s        7m58s
+video-transcoding-video3      3/3           42s        7m53s
+video-transcoding-video4      3/3           27s        7m50s
+```
+
+```log
+                           Name  Job_Start     Job_End  Deadline   Resp_Time    Lateness  Tardiness  DDL_Missed
+ID                                                                                                             
+1    spotify-songs-params-sweep        0.0  423.840909     360.0  423.840909   63.840909  63.840909           1
+2   car-evaluation-params-sweep        0.0  404.634126     360.0  404.634126   44.634126  44.634126           1
+3       video-transcoding-game1        5.0   61.947829     245.0   56.947829 -183.052171   0.000000           0
+4    video-transcoding-trailer1        5.0  156.148177     245.0  151.148177  -88.851823   0.000000           0
+5      video-transcoding-video1        5.0  272.391347     245.0  267.391347   27.391347  27.391347           1
+6       video-transcoding-game2       10.0  117.138916     250.0  107.138916 -132.861084   0.000000           0
+7    video-transcoding-trailer2       12.0  122.240725     132.0  110.240725   -9.759275   0.000000           0
+8      video-transcoding-video2       15.0   73.750500     135.0   58.750500  -61.249500   0.000000           0
+9    video-transcoding-trailer3       16.0  180.299263     256.0  164.299263  -75.700737   0.000000           0
+10      video-transcoding-game3       17.0  160.470550     317.0  143.470550 -156.529450   0.000000           0
+11     video-transcoding-video3       20.0   61.687595     140.0   41.687595  -78.312405   0.000000           0
+12     video-transcoding-video4       23.0   49.985081     143.0   26.985081  -93.014919   0.000000           0
+Total Deadline Misses: 3
+Max Resp Time: 423.841s
+Max Lateness: 63.841s
+Max Tardiness: 63.841s
+Avg Resp Time: 163.045s
+Avg Tardiness: 11.322s
+Avg Lateness: -61.955s
 ```

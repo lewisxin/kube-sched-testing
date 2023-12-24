@@ -9,11 +9,6 @@ PLUGIN:=default
 
 all: generate
 
-helm.install:
-	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-	chmod 700 get_helm.sh
-	./get_helm.sh
-
 cluster.build:
 	GOFLAGS='-buildvcs=false' kind build node-image --base-image ${KIND_BASE_IMG}
 	
@@ -55,11 +50,21 @@ config.defaultscheduler:
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/manifests/kube-scheduler.yaml /etc/kubernetes/kube-scheduler.yaml
 	docker exec $(CLUSTER)-control-plane cp /etc/kubernetes/kube-scheduler-default.yaml /etc/kubernetes/manifests/kube-scheduler.yaml
 
-pv.config:
+config.prios:
+	kubectl apply -f prios
+
+config.pv:
 	kubectl apply -f nfs
 
-pv.rm:
+delete.pv:
 	kubectl delete -f nfs
+
+delete.jobs:
+	kubectl delete jobs -l jobgroup=video-transcoding
+	kubectl delete jobs -l jobgroup=hyperparam-tuning
+	kubectl delete jobs -l jobgroup=countdown
+	kubectl delete pods -l jobgroup=countdown
+	kubectl delete pods -l jobgroup=stress
 
 pv.reload:
 	pv_name=$$(kubectl get pv -o custom-columns=NAME:.metadata.name --no-headers); \
@@ -73,16 +78,6 @@ pv.dump:
 	docker exec $(CLUSTER)-worker sh -c "cp -r /tmp/nfs-provisioner/$$pv_name/* /mnt/"; \
 	docker cp $(CLUSTER)-worker:/mnt/. temp/dump/; \
 	docker exec $(CLUSTER)-worker sh -c "rm -rf /mnt/*"
-
-deploy.prios:
-	kubectl apply -f prios
-
-delete.jobs:
-	kubectl delete jobs -l jobgroup=video-transcoding
-	kubectl delete jobs -l jobgroup=hyperparam-tuning
-	kubectl delete jobs -l jobgroup=countdown
-	kubectl delete pods -l jobgroup=countdown
-	kubectl delete pods -l jobgroup=stress
 
 print.pods:
 	kubectl get pods -o custom-columns=$(POD_COLUMNS)
@@ -105,7 +100,8 @@ podlistener.up:
 
 exp.run:
 	go build -o ./build/exp ./src/experiment
-	./build/exp -d data/jobs.csv
+	datafile=$$([[ "$$WITH_PRIO" == true ]] && echo "data/jobs-prio.csv" || echo "data/jobs.csv"); \
+	./build/exp -d $$datafile
 
 image.build:
 	docker build -t video-transcoding ./apps/video-transcoding
