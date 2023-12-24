@@ -56,7 +56,7 @@ def insert_paused_events(df: pd.DataFrame):
 
     # Concatenate with the main DataFrame
     df = pd.concat([df, paused_df], ignore_index=True)
-    df = df.sort_values(by=["Node", "Job", "Start"])
+    df = df.sort_values(by=["Node", "Start", "Job"])
     return df
 
 

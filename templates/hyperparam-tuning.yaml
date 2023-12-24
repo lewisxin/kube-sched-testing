@@ -25,7 +25,7 @@ spec:
             limits:
               cpu: <% .CPULimit %>
             requests:
-              cpu: 4
+              cpu: 5
           env:
             - name: DATA_FOLDER
               value: /mnt/<% .Meta1 %>
