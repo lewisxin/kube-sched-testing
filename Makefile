@@ -6,6 +6,7 @@ CURRENT_UNIX=$$(date +%s)
 SCHED_IMAGE:=localhost:5000/scheduler-plugins/kube-scheduler:latest
 KIND_BASE_IMG:=
 PLUGIN:=default
+DATA_FILE:=data/jobs.csv
 
 all: generate
 
@@ -100,8 +101,7 @@ podlistener.up:
 
 exp.run:
 	go build -o ./build/exp ./src/experiment
-	datafile=$$([[ "$$WITH_PRIO" == true ]] && echo "data/jobs-prio.csv" || echo "data/jobs.csv"); \
-	./build/exp -d $$datafile
+	./build/exp -d $(DATA_FILE)
 
 image.build:
 	docker build -t video-transcoding ./apps/video-transcoding

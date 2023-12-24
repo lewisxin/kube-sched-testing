@@ -222,6 +222,50 @@ Avg Tardiness: 86.713s
 Avg Lateness: 62.34s
 ```
 
+## Default with kill-based Preemption
+```bash
+NAME                          COMPLETIONS   DURATION   AGE
+car-evaluation-params-sweep   8/8           6m8s       13m
+spotify-songs-params-sweep    7/7           7m36s      13m
+video-transcoding-game1       3/3           62s        13m
+video-transcoding-game2       3/3           2m25s      13m
+video-transcoding-game3       3/3           2m46s      13m
+video-transcoding-trailer1    3/3           2m16s      13m
+video-transcoding-trailer2    3/3           2m16s      13m
+video-transcoding-trailer3    3/3           2m45s      13m
+video-transcoding-video1      3/3           5m         13m
+video-transcoding-video2      3/3           84s        13m
+video-transcoding-video3      3/3           65s        13m
+video-transcoding-video4      3/3           60s        13m
+```
+
+### Metrics
+```log
+plotting from data file: pod_events_default_prio.csv
+                           Name  Job_Start     Job_End  Deadline   Resp_Time    Lateness  Tardiness  DDL_Missed
+ID                                                                                                             
+1    spotify-songs-params-sweep        0.0  456.185938     360.0  456.185938   96.185938  96.185938           1
+2   car-evaluation-params-sweep        0.0  367.973469     360.0  367.973469    7.973469   7.973469           1
+3       video-transcoding-game1        5.0   67.227446     245.0   62.227446 -177.772554   0.000000           0
+4    video-transcoding-trailer1        5.0  141.021065     245.0  136.021065 -103.978935   0.000000           0
+5      video-transcoding-video1        5.0  304.452445     245.0  299.452445   59.452445  59.452445           1
+6       video-transcoding-game2       10.0  154.399186     250.0  144.399186  -95.600814   0.000000           0
+7    video-transcoding-trailer2       12.0  147.450240     132.0  135.450240   15.450240  15.450240           1
+8      video-transcoding-video2       15.0   98.505111     135.0   83.505111  -36.494889   0.000000           0
+9    video-transcoding-trailer3       16.0  180.701513     256.0  164.701513  -75.298487   0.000000           0
+10      video-transcoding-game3       17.0  182.867827     317.0  165.867827 -134.132173   0.000000           0
+11     video-transcoding-video3       20.0   85.100314     140.0   65.100314  -54.899686   0.000000           0
+12     video-transcoding-video4       23.0   82.413205     143.0   59.413205  -60.586795   0.000000           0
+Total Deadline Misses: 4
+Max Resp Time: 456.186s
+Max Lateness: 96.186s
+Max Tardiness: 96.186s
+Avg Resp Time: 178.358s
+Avg Tardiness: 14.922s
+Avg Lateness: -46.642s
+```
+
+
 ## LLF
 ```bash
 NAME                          COMPLETIONS   DURATION   AGE

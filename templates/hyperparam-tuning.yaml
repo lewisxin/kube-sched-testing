@@ -8,6 +8,8 @@ spec:
   completions: <% .Meta2 %>
   parallelism: <% .Meta2 %>
   completionMode: Indexed
+  backoffLimitPerIndex: 3
+  maxFailedIndexes: <% .Meta2 %>
   template:
     metadata:
       labels:
