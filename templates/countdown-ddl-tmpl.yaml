@@ -13,6 +13,7 @@ spec:
       annotations:
         rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>
         rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>
+        rt-preemptive.scheduling.x-k8s.io/atlas-enabled: "true"
       name: countdown
       labels:
         id: "<% .ID %>"
