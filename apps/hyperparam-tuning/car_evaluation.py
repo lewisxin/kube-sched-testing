@@ -4,7 +4,7 @@ import pandas as pd
 import yaml
 import sys
 import logging
-from sklearn.model_selection import RepeatedStratifiedKFold, GridSearchCV
+from sklearn.model_selection import RepeatedStratifiedKFold, RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -38,8 +38,8 @@ def get_hyperparams():
 def train(X_train, X_test, y_train, y_test, params):
     cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5, random_state=1)
     # find the best model
-    model = GridSearchCV(
-        RandomForestClassifier(), params, n_jobs=-1, cv=cv, error_score='raise', verbose=1)
+    model = RandomizedSearchCV(
+        RandomForestClassifier(), params, n_jobs=-1, cv=cv, n_iter=80, error_score='raise', verbose=1)
     model.fit(X_train, y_train)
     # pred on test set and report accuracy
     y_pred = model.predict(X_test)
