@@ -18,6 +18,7 @@ spec:
         rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>
         rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>
         rt-preemptive.scheduling.x-k8s.io/atlas-enabled: "true"
+        rt-preemptive.scheduling.x-k8s.io/metrics: "1,<% .Meta2 %>"
     spec:
       restartPolicy: Never
       priorityClassName: <% .Priority %>
