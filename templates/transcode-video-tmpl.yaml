@@ -18,7 +18,9 @@ spec:
         rt-preemptive.scheduling.x-k8s.io/ddl: <% .DDL %>
         rt-preemptive.scheduling.x-k8s.io/exec-time: <% .ExecutionTime %>
         rt-preemptive.scheduling.x-k8s.io/atlas-enabled: "true"
-        rt-preemptive.scheduling.x-k8s.io/metrics: "2,<% .Meta3 %>"
+        rt-preemptive.scheduling.x-k8s.io/atlas-predictor: "transcoding"
+        rt-preemptive.scheduling.x-k8s.io/atlas-metrics: "<% .Meta3 %>"
+        rt-preemptive.scheduling.x-k8s.io/atlas-use-job-index: "true"
     spec:
       restartPolicy: Never
       priorityClassName: <% .Priority %>
